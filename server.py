@@ -29,17 +29,23 @@ def rate_limit(key, max_calls=5, window=60):
 
 with app.app_context():
     db.create_all()
-    # Auto-migrate: add new columns if they don't exist
-    from sqlalchemy import text, inspect
-    inspector = inspect(db.engine)
-    user_cols = [c['name'] for c in inspector.get_columns('users')] if inspector.has_table('users') else []
-    with db.engine.connect() as conn:
-        if 'bonus_credits' not in user_cols:
-            conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
-            conn.commit()
-        if 'plan' not in user_cols:
-            conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
-            conn.commit()
+    # Auto-migrate: add new columns if missing
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            # Check existing columns
+            try:
+                conn.execute(text('SELECT bonus_credits FROM users LIMIT 1'))
+            except Exception:
+                conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
+                conn.commit()
+            try:
+                conn.execute(text('SELECT plan FROM users LIMIT 1'))
+            except Exception:
+                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
+                conn.commit()
+    except Exception as e:
+        print(f'Migration warning: {e}')
 
 # ── Decorators ────────────────────────────────────────────────
 
@@ -77,11 +83,14 @@ def static_files(filename):
 
 @app.errorhandler(404)
 def not_found(e):
-    return send_from_directory('.', '404.html'), 404
+    try:
+        return send_from_directory('.', '404.html'), 404
+    except Exception:
+        return jsonify({'error': 'Not found'}), 404
 
 @app.errorhandler(500)
 def server_error(e):
-    return send_from_directory('.', '404.html'), 500
+    return jsonify({'error': 'Internal server error', 'detail': str(e)}), 500
 
 # ── Auth: Register ────────────────────────────────────────────
 
@@ -111,8 +120,12 @@ def register():
         last_login=datetime.utcnow(),
         plan='free', credits=50, bonus_credits=300
     )
-    db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'DB error: {str(e)}'}), 500
     session.clear()
     session['user_id'] = user.id
     session.permanent = True
