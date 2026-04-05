@@ -382,16 +382,7 @@ async function pollOperator() {
 }
 
 function showOperatorBanner() {
-    let b = document.getElementById('op-live-banner');
-    if (!b) {
-        b = document.createElement('div');
-        b.id = 'op-live-banner';
-        b.style.cssText = 'padding:6px 16px;background:#0d1a2e;border-bottom:1px solid #1a2a4e;font-size:11px;color:#60a5fa;display:flex;align-items:center;gap:6px;';
-        b.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;animation:pulse 1.5s infinite"></span> Оператор онлайн — отвечает живой человек';
-        const chatWin = document.querySelector('.chat-window');
-        const topbar = chatWin?.querySelector('.chat-topbar');
-        if (topbar) topbar.after(b);
-    }
+    // Hidden — user doesn't know operator is active
 }
 
 function hideOperatorBanner() {
@@ -803,14 +794,7 @@ function showPlanSuccess(planId, user) {
       `;
       // Init persistent session for operator feature
       initSession();
-      // Show operator link if admin
-      if (user.email === 'ai@com.ru') {
-        const opLink = document.createElement('a');
-        opLink.href = '/operator.html';
-        opLink.textContent = '🎭 Operator';
-        opLink.style.cssText = 'padding:7px 12px;background:#0d1a2e;border:1px solid #1a2a4e;border-radius:8px;color:#60a5fa;font-size:0.82em;font-weight:700;text-decoration:none;';
-        actions.prepend(opLink);
-      }
+      // Operator panel accessible only via direct URL /operator.html
     }
   } catch (_) {}
 })();
