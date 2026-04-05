@@ -81,6 +81,9 @@
             <div class="chat-input-area">
                 <div class="chat-input-wrap">
                     <textarea id="demo-input" placeholder="Message AI Chat Pro..." rows="1"></textarea>
+                    <button onclick="triggerImageUpload()" title="Attach image" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;transition:all 0.15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='none'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <button id="demo-send" onclick="sendDemo()">↑</button>
                 </div>
                 <div class="chat-footer-note">AI Chat Pro may make mistakes. <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank" style="color:inherit">Terms</a></div>
@@ -233,22 +236,47 @@ async function getGroqKey() {
 // Pre-load on page start
 getGroqKey();
 
-// Send via server proxy (avoids CORS issues for users)
-async function callAI(messages, temperature) {
+// Send via server proxy with streaming
+async function callAI(messages, temperature, onChunk) {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       messages,
-      max_tokens: 400,
-      temperature: temperature || 0.7
+      max_tokens: 800,
+      temperature: temperature || 0.7,
+      stream: !!onChunk
     })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
+
+  if (onChunk) {
+    // Streaming
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      const lines = text.split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        const json = line.slice(6);
+        if (json === '[DONE]') continue;
+        try {
+          const d = JSON.parse(json);
+          const chunk = d.choices?.[0]?.delta?.content || '';
+          if (chunk) { full += chunk; onChunk(chunk, full); }
+        } catch(_) {}
+      }
+    }
+    return full;
+  }
+
   return res.json();
 }
 
@@ -402,22 +430,34 @@ async function sendDemo() {
     showTyping();
 
     try {
-        const data = await callAI(
-            [{ role: 'system', content: currentModel === 'roast' ? SYSTEM_ROAST : SYSTEM }, ...history.slice(-10)],
-            currentModel === 'roast' ? 0.9 : 0.7
-        );
-        if (data.error) throw new Error(data.error.message || 'API error');
-        const raw = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
-        const reply = raw.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
+        // Build messages with optional image
+        const userContent = pendingImage
+            ? [{ type: 'text', text: text }, { type: 'image_url', image_url: { url: pendingImage } }]
+            : text;
+        clearImage();
+
+        const msgs = [
+            { role: 'system', content: currentModel === 'roast' ? SYSTEM_ROAST : SYSTEM },
+            ...history.slice(-10),
+            { role: 'user', content: userContent }
+        ];
+
+        // Streaming response
+        const bubble = addMsg('', 'ai');
         document.getElementById('typing-indicator')?.remove();
-        addMsg(reply, 'ai');
-        history.push({ role: 'assistant', content: reply });
+        let fullReply = '';
+
+        await callAI(msgs, currentModel === 'roast' ? 0.9 : 0.7, (chunk, full) => {
+            fullReply = full.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
+            bubble.innerHTML = renderMarkdown(fullReply);
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        history.push({ role: 'assistant', content: fullReply });
     } catch (e) {
         document.getElementById('typing-indicator')?.remove();
         if (e.message.includes('503') || e.message.includes('not configured')) {
             addMsg('⚠️ Сервис временно недоступен. Попробуйте позже.', 'ai');
-        } else if (e.message.includes('401') || e.message.includes('403')) {
-            addMsg('⚠️ Ошибка авторизации сервиса.', 'ai');
         } else {
             addMsg('⚠️ Временная ошибка. Попробуйте снова.', 'ai');
         }
@@ -425,7 +465,60 @@ async function sendDemo() {
     loading = false; sendBtn.disabled = false; input.focus();
 }
 
-// ── Nomchat ID OAuth ──────────────────────────────────────────
+// ── Image upload ─────────────────────────────────────────────
+let pendingImage = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Image paste
+  document.getElementById('demo-input').addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = ev => showImagePreview(ev.target.result);
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  });
+});
+
+function showImagePreview(dataUrl) {
+  pendingImage = dataUrl;
+  let preview = document.getElementById('img-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.id = 'img-preview';
+    preview.style.cssText = 'padding:8px 20px 0;display:flex;align-items:center;gap:8px;';
+    document.querySelector('.chat-input-area').prepend(preview);
+  }
+  preview.innerHTML = `
+    <img src="${dataUrl}" style="height:60px;border-radius:8px;border:1px solid var(--border)">
+    <button onclick="clearImage()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.2em">×</button>
+    <span style="font-size:0.78em;color:var(--text3)">Image attached</span>
+  `;
+}
+
+function clearImage() {
+  pendingImage = null;
+  document.getElementById('img-preview')?.remove();
+}
+
+// Image upload button
+function triggerImageUpload() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => showImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
 function loginWithNomchat() {
     const popup = window.open(
         `${NOMCHAT_URL}/oauth.html?app_id=ai-chat-pro&app_name=AI+Chat+Pro`,

@@ -216,18 +216,29 @@ def get_groq_key():
 
 @app.route('/api/chat', methods=['POST'])
 def proxy_chat():
-    """Proxy chat requests to Groq — avoids CORS and client-side key exposure"""
+    """Proxy chat requests to Groq with streaming support"""
     key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
     if not key:
         return jsonify({'error': 'Service not configured'}), 503
     try:
         data = request.get_json(silent=True) or {}
+        stream = data.get('stream', False)
+
         resp = requests.post(
             'https://api.groq.com/openai/v1/chat/completions',
             headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
             json=data,
-            timeout=30
+            timeout=60,
+            stream=stream
         )
+
+        if stream:
+            def generate():
+                for chunk in resp.iter_content(chunk_size=None):
+                    if chunk:
+                        yield chunk
+            return app.response_class(generate(), status=resp.status_code,
+                                      content_type='text/event-stream')
         return jsonify(resp.json()), resp.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
