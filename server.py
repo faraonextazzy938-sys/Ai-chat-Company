@@ -210,9 +210,9 @@ def update_user(user):
 @app.route('/api/config/groq-key')
 def get_groq_key():
     """Return Groq key from env — never stored in frontend code"""
-    key = os.environ.get('GROQ_KEY', '')
+    key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
     if not key:
-        return jsonify({'error': 'GROQ_KEY not configured'}), 503
+        return jsonify({'error': 'GROQ key not configured'}), 503
     return jsonify({'key': key})
 @login_required
 def delete_user(user):
