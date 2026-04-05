@@ -12,6 +12,7 @@ PLANS = {
 }
 
 class User(db.Model):
+    """Only original columns — new ones managed via raw SQL to avoid migration issues"""
     __tablename__ = 'users'
 
     id               = db.Column(db.Integer, primary_key=True)
@@ -24,10 +25,6 @@ class User(db.Model):
     is_banned        = db.Column(db.Boolean, default=False)
     created_at       = db.Column(db.DateTime, default=datetime.utcnow)
     last_login       = db.Column(db.DateTime)
-    # New columns — added via migration, may not exist in old DB
-    credits          = db.Column(db.Integer, nullable=True)
-    bonus_credits    = db.Column(db.Integer, nullable=True)
-    plan             = db.Column(db.String(20), nullable=True)
 
     @staticmethod
     def hash_password(password: str) -> str:
@@ -52,19 +49,14 @@ class ChatSession(db.Model):
 
     def to_dict(self, include_messages=False):
         d = {
-            'id':          self.id,
-            'user_id':     self.user_id,
+            'id': self.id, 'user_id': self.user_id,
             'session_key': self.session_key,
-            'operator_on': self.operator_on,
-            'operator_id': self.operator_id,
-            'created_at':  self.created_at.isoformat(),
-            'updated_at':  self.updated_at.isoformat(),
-            'user': {
-                'id':       self.user.id,
-                'username': self.user.username,
-                'email':    self.user.email,
-                'avatar':   self.user.nomchat_avatar or '👤',
-            } if self.user else None,
+            'operator_on': self.operator_on, 'operator_id': self.operator_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'user': {'id': self.user.id, 'username': self.user.username,
+                     'email': self.user.email, 'avatar': self.user.nomchat_avatar or '👤'
+                     } if self.user else None,
         }
         if include_messages:
             d['messages'] = [m.to_dict() for m in
@@ -83,10 +75,6 @@ class ChatMessage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        return {
-            'id':         self.id,
-            'session_id': self.session_id,
-            'role':       self.role,
-            'content':    self.content,
-            'created_at': self.created_at.isoformat(),
-        }
+        return {'id': self.id, 'session_id': self.session_id,
+                'role': self.role, 'content': self.content,
+                'created_at': self.created_at.isoformat()}
