@@ -15,8 +15,13 @@ app.config['SESSION_COOKIE_SECURE']   = os.environ.get('RAILWAY_ENVIRONMENT') ==
 _db_url = os.environ.get('DATABASE_URL', 'sqlite:///aichat.db')
 if _db_url.startswith('postgres://'):
     _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+# Remove unsupported params for older psycopg2
+import re as _re
+_db_url = _re.sub(r'[?&]channel_binding=[^&]*', '', _db_url)
+_db_url = _re.sub(r'\?$', '', _db_url)
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True}
 
 CORS(app, supports_credentials=True, origins=os.environ.get('ALLOWED_ORIGINS', '*').split(','))
 db.init_app(app)
