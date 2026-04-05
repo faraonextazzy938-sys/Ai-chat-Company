@@ -225,11 +225,14 @@ let _groqKey = null;
 async function getGroqKey() {
   if (_groqKey) return _groqKey;
   try {
-    const res = await fetch('/api/config/groq-key', { credentials: 'include' });
-    if (res.ok) { const d = await res.json(); _groqKey = d.key; return _groqKey; }
+    // No credentials needed — endpoint is public
+    const res = await fetch('/api/config/groq-key');
+    if (res.ok) { const d = await res.json(); if (d.key) { _groqKey = d.key; return _groqKey; } }
   } catch (_) {}
   return null;
 }
+// Pre-load on page start
+getGroqKey();
 
 const SYSTEM = `You are AI Chat Pro — a helpful AI assistant created by AI Chat Company.
 
@@ -382,7 +385,7 @@ async function sendDemo() {
 
     try {
         const groqKey = await getGroqKey();
-        if (!groqKey) throw new Error('API ключ не настроен');
+        if (!groqKey) throw new Error('NO_KEY');
         const res = await fetch(GROQ_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
@@ -392,16 +395,25 @@ async function sendDemo() {
                 max_tokens: 400, temperature: currentModel === 'roast' ? 0.9 : 0.7
             })
         });
+        if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
         const data = await res.json();
+        if (data.error) throw new Error(data.error.message || 'API error');
         const raw = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
-        // Strip stray CJK characters (Chinese/Japanese/Korean tokens from model)
         const reply = raw.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
         document.getElementById('typing-indicator')?.remove();
         addMsg(reply, 'ai');
         history.push({ role: 'assistant', content: reply });
     } catch (e) {
         document.getElementById('typing-indicator')?.remove();
-        addMsg('Connection error. Please try again.', 'ai');
+        if (e.message === 'NO_KEY') {
+            addMsg('⚠️ Сервис временно недоступен. Попробуйте позже или войдите в аккаунт.', 'ai');
+        } else if (e.message === 'API_KEY_INVALID') {
+            addMsg('⚠️ Ошибка авторизации сервиса. Обратитесь к администратору.', 'ai');
+        } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+            addMsg('⚠️ Нет подключения к интернету. Проверьте соединение и попробуйте снова.', 'ai');
+        } else {
+            addMsg('⚠️ Временная ошибка. Попробуйте снова через несколько секунд.', 'ai');
+        }
     }
     loading = false; sendBtn.disabled = false; input.focus();
 }
