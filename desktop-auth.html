@@ -182,24 +182,23 @@ async function confirm() {
   });
   const encoded = btoa(tokenData);
 
+  // Write to localStorage — desktop app polls this
+  try {
+    localStorage.setItem('desktop_auth_token', encoded);
+    localStorage.setItem('desktop_auth_state', state);
+  } catch(_) {}
+
   document.getElementById('confirmView').style.display = 'none';
   document.getElementById('successView').style.display = 'block';
-
-  // Redirect to custom protocol that Electron intercepts
-  // aichatpro://auth?token=...
-  setTimeout(() => {
-    window.location.href = `aichatpro://auth?token=${encodeURIComponent(encoded)}&state=${encodeURIComponent(state)}`;
-  }, 500);
-
   setTimeout(() => window.close(), 3000);
 }
 
 function deny() {
+  try {
+    localStorage.setItem('desktop_auth_denied', state);
+  } catch(_) {}
   document.getElementById('confirmView').style.display = 'none';
   document.getElementById('deniedView').style.display = 'block';
-  setTimeout(() => {
-    window.location.href = `aichatpro://denied?state=${encodeURIComponent(state)}`;
-  }, 300);
   setTimeout(() => window.close(), 2000);
 }
 
