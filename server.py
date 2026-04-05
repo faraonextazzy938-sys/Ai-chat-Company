@@ -50,16 +50,18 @@ def _safe_user(user):
     }
 
 with app.app_context():
-    db.create_all()
+    # Run migration BEFORE create_all so columns exist when SQLAlchemy maps them
     try:
-        from sqlalchemy import text
-        with db.engine.connect() as conn:
+        from sqlalchemy import text, create_engine
+        _tmp = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        with _tmp.connect() as conn:
             rows = conn.execute(text("PRAGMA table_info(users)")).fetchall()
             if rows:
                 existing = {row[1] for row in rows}
                 for col, sql in [
-                    ('bonus_credits', 'ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'),
-                    ('plan',          "ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"),
+                    ('credits',       'ALTER TABLE users ADD COLUMN credits INTEGER'),
+                    ('bonus_credits', 'ALTER TABLE users ADD COLUMN bonus_credits INTEGER'),
+                    ('plan',          'ALTER TABLE users ADD COLUMN plan VARCHAR(20)'),
                 ]:
                     if col not in existing:
                         try:
@@ -67,8 +69,11 @@ with app.app_context():
                             conn.commit()
                         except Exception:
                             pass
+        _tmp.dispose()
     except Exception as e:
-        app.logger.warning(f'Migration: {e}')
+        app.logger.warning(f'Pre-migration: {e}')
+
+    db.create_all()
 
 # ── Decorators ────────────────────────────────────────────────
 

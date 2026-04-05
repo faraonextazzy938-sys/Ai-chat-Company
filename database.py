@@ -21,26 +21,13 @@ class User(db.Model):
     nomchat_id       = db.Column(db.Integer, nullable=True)
     nomchat_username = db.Column(db.String(100), nullable=True)
     nomchat_avatar   = db.Column(db.String(50), nullable=True)
-    credits          = db.Column(db.Integer, default=50)
-    bonus_credits    = db.Column(db.Integer, default=300)
-    plan             = db.Column(db.String(20), default='free')
     is_banned        = db.Column(db.Boolean, default=False)
     created_at       = db.Column(db.DateTime, default=datetime.utcnow)
     last_login       = db.Column(db.DateTime)
-
-    def total_credits(self):
-        if self.plan == 'ultra': return -1
-        return (self.bonus_credits or 0) + (self.credits or 0)
-
-    def deduct_credit(self):
-        if self.plan == 'ultra': return True
-        if (self.bonus_credits or 0) > 0:
-            self.bonus_credits -= 1
-            return True
-        if (self.credits or 0) > 0:
-            self.credits -= 1
-            return True
-        return False
+    # New columns — added via migration, may not exist in old DB
+    credits          = db.Column(db.Integer, nullable=True)
+    bonus_credits    = db.Column(db.Integer, nullable=True)
+    plan             = db.Column(db.String(20), nullable=True)
 
     @staticmethod
     def hash_password(password: str) -> str:
@@ -49,27 +36,6 @@ class User(db.Model):
 
     def verify_password(self, password: str) -> bool:
         return self.password_hash == self.hash_password(password)
-
-    def to_dict(self):
-        plan = self.plan or 'free'
-        credits = self.credits or 0
-        bonus = self.bonus_credits or 0
-        total = -1 if plan == 'ultra' else bonus + credits
-        return {
-            'id':               self.id,
-            'email':            self.email,
-            'username':         self.username,
-            'credits':          credits,
-            'bonus_credits':    bonus,
-            'total_credits':    total,
-            'plan':             plan,
-            'nomchat_id':       self.nomchat_id,
-            'nomchat_username': self.nomchat_username,
-            'nomchat_avatar':   self.nomchat_avatar,
-            'has_password':     self.password_hash is not None,
-            'created_at':       self.created_at.isoformat() if self.created_at else None,
-            'last_login':       self.last_login.isoformat() if self.last_login else None,
-        }
 
 
 class ChatSession(db.Model):
