@@ -6,7 +6,7 @@ from functools import wraps
 import secrets, os, re, requests, traceback
 
 app = Flask(__name__, static_folder='.')
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.secret_key = os.environ.get('SECRET_KEY', 'aichat-company-secret-key-2026-stable')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE']   = os.environ.get('RAILWAY_ENVIRONMENT') == 'production'
