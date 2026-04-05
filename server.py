@@ -85,7 +85,8 @@ def not_found(e):
 
 @app.errorhandler(500)
 def server_error(e):
-    return jsonify({'error': 'Internal server error', 'detail': str(e)}), 500
+    import traceback
+    return jsonify({'error': 'Internal server error', 'detail': str(e), 'trace': traceback.format_exc()}), 500
 
 # ── Auth: Register ────────────────────────────────────────────
 
@@ -161,48 +162,52 @@ def login():
 
 @app.route('/api/auth/nomchat', methods=['POST'])
 def nomchat_auth():
-    data  = request.get_json(silent=True) or {}
-    token = data.get('token', '')
-    if not token: return jsonify({'error': 'Token required'}), 400
-
+    import traceback
     try:
-        res = requests.post(f'{NOMCHAT_URL}/api/auth/token/verify',
-                            json={'token': token, 'app_id': NOMCHAT_APP_ID}, timeout=5)
-        nc_data = res.json()
-    except Exception as e:
-        return jsonify({'error': f'Nomchat unreachable: {e}'}), 503
+        data  = request.get_json(silent=True) or {}
+        token = data.get('token', '')
+        if not token: return jsonify({'error': 'Token required'}), 400
 
-    if not res.ok or not nc_data.get('success'):
-        return jsonify({'error': nc_data.get('error', 'Invalid token')}), 401
+        try:
+            res = requests.post(f'{NOMCHAT_URL}/api/auth/token/verify',
+                                json={'token': token, 'app_id': NOMCHAT_APP_ID}, timeout=5)
+            nc_data = res.json()
+        except Exception as e:
+            return jsonify({'error': f'Nomchat unreachable: {e}'}), 503
 
-    nc_user = nc_data['user']
-    email   = nc_user['email']
-    user    = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(email=email, username=nc_user['username'],
-                    nomchat_id=nc_user['id'], nomchat_username=nc_user['username'],
-                    nomchat_avatar=nc_user.get('avatar', '💬'),
-                    plan='free', credits=50, bonus_credits=300)
-        db.session.add(user)
-    else:
-        user.nomchat_id       = nc_user['id']
-        user.nomchat_username = nc_user['username']
-        user.nomchat_avatar   = nc_user.get('avatar', '💬')
+        if not res.ok or not nc_data.get('success'):
+            return jsonify({'error': nc_data.get('error', 'Invalid token')}), 401
 
-    if user.is_banned: return jsonify({'error': 'banned'}), 403
-    user.last_login = datetime.utcnow()
-    try:
+        nc_user = nc_data['user']
+        email   = nc_user['email']
+        user    = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, username=nc_user['username'],
+                        nomchat_id=nc_user['id'], nomchat_username=nc_user['username'],
+                        nomchat_avatar=nc_user.get('avatar', '💬'),
+                        plan='free', credits=50, bonus_credits=300)
+            db.session.add(user)
+        else:
+            user.nomchat_id       = nc_user['id']
+            user.nomchat_username = nc_user['username']
+            user.nomchat_avatar   = nc_user.get('avatar', '💬')
+
+        if user.is_banned: return jsonify({'error': 'banned'}), 403
+        user.last_login = datetime.utcnow()
         db.session.commit()
+        session.clear()
+        session['user_id'] = user.id
+        session.permanent = True
+        safe = {'id': user.id, 'email': user.email, 'username': user.username,
+                'credits': getattr(user,'credits',50) or 50,
+                'bonus_credits': getattr(user,'bonus_credits',300) or 300,
+                'total_credits': (getattr(user,'bonus_credits',300) or 300) + (getattr(user,'credits',50) or 50),
+                'plan': getattr(user,'plan','free') or 'free',
+                'nomchat_avatar': user.nomchat_avatar, 'nomchat_username': user.nomchat_username}
+        return jsonify({'success': True, 'user': safe})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'DB error: {str(e)}'}), 500
-    session.clear()
-    session['user_id'] = user.id
-    session.permanent = True
-    try:
-        return jsonify({'success': True, 'user': user.to_dict()})
-    except Exception as e:
-        return jsonify({'success': True, 'user': {'id': user.id, 'email': user.email, 'username': user.username, 'credits': 50, 'bonus_credits': 300, 'total_credits': 350, 'plan': 'free'}})
+        return jsonify({'error': 'nomchat_auth failed', 'detail': str(e), 'trace': traceback.format_exc()}), 500
 
 # ── Auth: Me / Logout ─────────────────────────────────────────
 
