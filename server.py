@@ -10,7 +10,12 @@ app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE']   = os.environ.get('RAILWAY_ENVIRONMENT') == 'production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aichat.db'
+
+# Use PostgreSQL on Railway, SQLite locally
+_db_url = os.environ.get('DATABASE_URL', 'sqlite:///aichat.db')
+if _db_url.startswith('postgres://'):
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 CORS(app, supports_credentials=True, origins=os.environ.get('ALLOWED_ORIGINS', '*').split(','))
@@ -30,7 +35,7 @@ def rate_limit(key, max_calls=5, window=60):
 # ── Credits via raw SQL (avoids column-not-found on old DB) ───
 
 def _get_credits(user_id):
-    """Returns (credits, bonus_credits, plan) for a user"""
+    """Returns (credits, bonus_credits, plan) for a user via raw SQL"""
     try:
         from sqlalchemy import text
         with db.engine.connect() as conn:
@@ -39,7 +44,9 @@ def _get_credits(user_id):
                 {'id': user_id}
             ).fetchone()
             if row:
-                return (row[0] or 50, row[1] or 300, row[2] or 'free')
+                return (row[0] if row[0] is not None else 50,
+                        row[1] if row[1] is not None else 300,
+                        row[2] if row[2] is not None else 'free')
     except Exception:
         pass
     return (50, 300, 'free')
@@ -47,20 +54,16 @@ def _get_credits(user_id):
 def _set_credits(user_id, credits=None, bonus_credits=None, plan=None):
     try:
         from sqlalchemy import text
-        parts = []
-        params = {'id': user_id}
-        if credits is not None:
-            parts.append('credits=:credits'); params['credits'] = credits
-        if bonus_credits is not None:
-            parts.append('bonus_credits=:bonus_credits'); params['bonus_credits'] = bonus_credits
-        if plan is not None:
-            parts.append('plan=:plan'); params['plan'] = plan
+        parts, params = [], {'id': user_id}
+        if credits is not None:       parts.append('credits=:credits');             params['credits'] = credits
+        if bonus_credits is not None: parts.append('bonus_credits=:bonus_credits'); params['bonus_credits'] = bonus_credits
+        if plan is not None:          parts.append('plan=:plan');                   params['plan'] = plan
         if not parts: return
         with db.engine.connect() as conn:
             conn.execute(text(f'UPDATE users SET {",".join(parts)} WHERE id=:id'), params)
             conn.commit()
     except Exception as e:
-        app.logger.warning(f'_set_credits error: {e}')
+        app.logger.warning(f'_set_credits: {e}')
 
 def _safe_user(user):
     credits, bonus, plan = _get_credits(user.id)
@@ -79,20 +82,38 @@ def _safe_user(user):
 
 with app.app_context():
     db.create_all()
-    # Add new columns if missing
+    # Add new columns if missing (SQLite and PostgreSQL)
     try:
         from sqlalchemy import text
+        is_pg = 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']
         with db.engine.connect() as conn:
-            rows = conn.execute(text('PRAGMA table_info(users)')).fetchall()
-            existing = {r[1] for r in rows}
-            for col, sql in [
-                ('credits',       'ALTER TABLE users ADD COLUMN credits INTEGER DEFAULT 50'),
-                ('bonus_credits', 'ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'),
-                ('plan',          "ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"),
-            ]:
-                if col not in existing:
-                    try: conn.execute(text(sql)); conn.commit()
-                    except Exception: pass
+            if is_pg:
+                # PostgreSQL: check information_schema
+                rows = conn.execute(text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='users'"
+                )).fetchall()
+                existing = {r[0] for r in rows}
+                for col, sql in [
+                    ('credits',       'ALTER TABLE users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 50'),
+                    ('bonus_credits', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS bonus_credits INTEGER DEFAULT 300'),
+                    ('plan',          "ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(20) DEFAULT 'free'"),
+                ]:
+                    if col not in existing:
+                        try: conn.execute(text(sql)); conn.commit()
+                        except Exception: pass
+            else:
+                # SQLite: use PRAGMA
+                rows = conn.execute(text('PRAGMA table_info(users)')).fetchall()
+                existing = {r[1] for r in rows}
+                for col, sql in [
+                    ('credits',       'ALTER TABLE users ADD COLUMN credits INTEGER DEFAULT 50'),
+                    ('bonus_credits', 'ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'),
+                    ('plan',          "ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"),
+                ]:
+                    if col not in existing:
+                        try: conn.execute(text(sql)); conn.commit()
+                        except Exception: pass
     except Exception as e:
         app.logger.warning(f'Migration: {e}')
 
