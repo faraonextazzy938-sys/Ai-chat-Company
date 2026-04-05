@@ -29,18 +29,27 @@ def rate_limit(key, max_calls=5, window=60):
 
 with app.app_context():
     db.create_all()
-    # Safe migration for existing databases
-    from sqlalchemy import text
-    with db.engine.connect() as conn:
-        # Get existing columns
-        result = conn.execute(text("PRAGMA table_info(users)"))
-        existing = {row[1] for row in result.fetchall()}
-        if 'bonus_credits' not in existing:
-            conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
-            conn.commit()
-        if 'plan' not in existing:
-            conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
-            conn.commit()
+    # Safe migration — add missing columns to existing DB
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            rows = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+            if rows:
+                existing = {row[1] for row in rows}
+                migrations = [
+                    ('bonus_credits', 'ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'),
+                    ('plan',          "ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"),
+                ]
+                for col, sql in migrations:
+                    if col not in existing:
+                        try:
+                            conn.execute(text(sql))
+                            conn.commit()
+                            app.logger.info(f'Added column: {col}')
+                        except Exception as col_err:
+                            app.logger.warning(f'Column {col} migration failed: {col_err}')
+    except Exception as e:
+        app.logger.warning(f'Migration error: {e}')
 
 # ── Decorators ────────────────────────────────────────────────
 
@@ -87,6 +96,21 @@ def not_found(e):
 def server_error(e):
     import traceback
     return jsonify({'error': 'Internal server error', 'detail': str(e), 'trace': traceback.format_exc()}), 500
+
+# ── Debug ─────────────────────────────────────────────────────
+
+@app.route('/api/debug/schema')
+def debug_schema():
+    """Temporary: show DB schema for debugging"""
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            rows = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+            cols = [{'cid': r[0], 'name': r[1], 'type': r[2]} for r in rows]
+        return jsonify({'columns': cols, 'count': len(cols)})
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 # ── Auth: Register ────────────────────────────────────────────
 
