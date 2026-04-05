@@ -14,24 +14,14 @@ app.config['SESSION_COOKIE_SECURE']   = os.environ.get('RAILWAY_ENVIRONMENT') ==
 # Use PostgreSQL on Railway, SQLite locally
 _db_url = os.environ.get('DATABASE_URL', 'sqlite:///aichat.db')
 if _db_url.startswith('postgres://'):
-    _db_url = _db_url.replace('postgres://', 'postgresql+pg8000://', 1)
-elif _db_url.startswith('postgresql://'):
-    _db_url = _db_url.replace('postgresql://', 'postgresql+pg8000://', 1)
-# Remove unsupported params
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+# Strip unsupported params
 import re as _re
 _db_url = _re.sub(r'[?&]channel_binding=[^&]*', '', _db_url)
-_db_url = _re.sub(r'[?&]sslmode=[^&]*', '', _db_url)
 _db_url = _re.sub(r'\?$|&$', '', _db_url)
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# pg8000 needs ssl for Neon
-if 'pg8000' in _db_url:
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,
-        'connect_args': {'ssl_context': True}
-    }
-else:
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True}
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
 
 CORS(app, supports_credentials=True, origins=os.environ.get('ALLOWED_ORIGINS', '*').split(','))
 db.init_app(app)
