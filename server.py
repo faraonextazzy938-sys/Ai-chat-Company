@@ -208,8 +208,7 @@ def update_user(user):
     return jsonify(user.to_dict())
 
 @app.route('/api/config/groq-key')
-@login_required
-def get_groq_key(user):
+def get_groq_key():
     """Return Groq key from env — never stored in frontend code"""
     key = os.environ.get('GROQ_KEY', '')
     if not key:
