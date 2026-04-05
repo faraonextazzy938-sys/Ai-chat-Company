@@ -263,6 +263,8 @@ PERSONALITY:
 STRICT RULES:
 - NEVER say "ахаха", "ахахаха", "хаха", "haha", "lol", "lmao" or any laughing phrases
 - NEVER say "боже", "о боже", "oh god", "oh my god"
+- NEVER use Chinese, Japanese, Korean or any non-Latin/Cyrillic characters
+- ONLY use Russian or English letters — no symbols from other languages
 - Don't be predictable — vary your responses
 - Be dry and cold when roasting, not giggly
 - Answer in the language the user writes in
@@ -391,7 +393,9 @@ async function sendDemo() {
             })
         });
         const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
+        const raw = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
+        // Strip stray CJK characters (Chinese/Japanese/Korean tokens from model)
+        const reply = raw.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
         document.getElementById('typing-indicator')?.remove();
         addMsg(reply, 'ai');
         history.push({ role: 'assistant', content: reply });
