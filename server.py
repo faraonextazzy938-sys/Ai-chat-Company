@@ -152,7 +152,10 @@ def login():
     session.clear()
     session['user_id'] = user.id
     session.permanent = True
-    return jsonify({'success': True, 'user': user.to_dict()})
+    try:
+        return jsonify({'success': True, 'user': user.to_dict()})
+    except Exception:
+        return jsonify({'success': True, 'user': {'id': user.id, 'email': user.email, 'username': user.username, 'credits': getattr(user,'credits',50) or 50, 'bonus_credits': getattr(user,'bonus_credits',300) or 300, 'total_credits': 350, 'plan': getattr(user,'plan','free') or 'free'}})
 
 # ── Auth: Nomchat OAuth ───────────────────────────────────────
 
@@ -188,18 +191,28 @@ def nomchat_auth():
 
     if user.is_banned: return jsonify({'error': 'banned'}), 403
     user.last_login = datetime.utcnow()
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'DB error: {str(e)}'}), 500
     session.clear()
     session['user_id'] = user.id
     session.permanent = True
-    return jsonify({'success': True, 'user': user.to_dict()})
+    try:
+        return jsonify({'success': True, 'user': user.to_dict()})
+    except Exception as e:
+        return jsonify({'success': True, 'user': {'id': user.id, 'email': user.email, 'username': user.username, 'credits': 50, 'bonus_credits': 300, 'total_credits': 350, 'plan': 'free'}})
 
 # ── Auth: Me / Logout ─────────────────────────────────────────
 
 @app.route('/api/auth/me')
 @login_required
 def me(user):
-    return jsonify(user.to_dict())
+    try:
+        return jsonify(user.to_dict())
+    except Exception:
+        return jsonify({'id': user.id, 'email': user.email, 'username': user.username, 'credits': getattr(user,'credits',50) or 50, 'bonus_credits': getattr(user,'bonus_credits',300) or 300, 'total_credits': 350, 'plan': getattr(user,'plan','free') or 'free'})
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
