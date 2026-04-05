@@ -216,13 +216,26 @@ def get_groq_key():
 
 @app.route('/api/chat', methods=['POST'])
 def proxy_chat():
-    """Proxy chat requests to Groq with streaming support"""
+    """Proxy chat requests — supports text and vision"""
     key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
     if not key:
         return jsonify({'error': 'Service not configured'}), 503
     try:
         data = request.get_json(silent=True) or {}
         stream = data.get('stream', False)
+
+        # Check if any message has image content — use vision model
+        has_image = any(
+            isinstance(m.get('content'), list) and
+            any(c.get('type') == 'image_url' for c in m['content'])
+            for m in data.get('messages', [])
+        )
+
+        # Use vision-capable model if image present
+        if has_image:
+            data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'
+            data['stream'] = False  # vision doesn't support streaming on groq yet
+            stream = False
 
         resp = requests.post(
             'https://api.groq.com/openai/v1/chat/completions',

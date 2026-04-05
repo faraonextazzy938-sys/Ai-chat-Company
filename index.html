@@ -280,23 +280,19 @@ async function callAI(messages, temperature, onChunk) {
   return res.json();
 }
 
-const SYSTEM = `You are AI Chat Pro — a helpful AI assistant created by AI Chat Company.
+const SYSTEM = `You are AI Chat Pro — a highly capable AI assistant created by AI Chat Company.
+Powered by Llama 3.3 70B. You can analyze images and screenshots.
 
-ABOUT YOU:
-- Created by AI Chat Company
-- Powered by Llama 3.3 70B via Groq
-
-ABOUT NOMCHAT ID:
-- Nomchat ID is an identity platform created by Nomchat prod. (NOT AI Chat Company)
-- It provides zero-password authentication via email codes
-- AI Chat Pro supports login via Nomchat ID
-- Website: nomchat-id.up.railway.app
-
-BEHAVIOR:
-- Be concise and friendly
+RULES:
+- Write correct, working, production-ready code — always double-check logic
+- Use proper syntax and best practices for every language
+- If analyzing an image/screenshot — describe what you see and help accordingly
+- Be concise but thorough
 - Answer in the language the user writes in
-- Do NOT use markdown asterisks — write plain text
-- Keep answers short unless asked for detail`;
+- Use markdown for code blocks
+
+If asked who created you: "AI Chat Company"
+If asked about Nomchat ID: it's an identity platform by Nomchat prod., not AI Chat Company`;
 
 const SYSTEM_ROAST = `You are AI Roast — a sharp, witty AI with attitude, created by AI Chat Company.
 
@@ -434,6 +430,7 @@ async function sendDemo() {
         const userContent = pendingImage
             ? [{ type: 'text', text: text }, { type: 'image_url', image_url: { url: pendingImage } }]
             : text;
+        const hasImage = !!pendingImage;
         clearImage();
 
         const msgs = [
@@ -442,18 +439,28 @@ async function sendDemo() {
             { role: 'user', content: userContent }
         ];
 
-        // Streaming response
-        const bubble = addMsg('', 'ai');
-        document.getElementById('typing-indicator')?.remove();
-        let fullReply = '';
+        if (hasImage) {
+            // Vision — no streaming
+            const data = await callAI(msgs, 0.7, null);
+            const raw = data.choices?.[0]?.message?.content || 'Could not analyze image.';
+            const reply = raw.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
+            document.getElementById('typing-indicator')?.remove();
+            addMsg(reply, 'ai');
+            history.push({ role: 'assistant', content: reply });
+        } else {
+            // Text — streaming
+            const bubble = addMsg('', 'ai');
+            document.getElementById('typing-indicator')?.remove();
+            let fullReply = '';
 
-        await callAI(msgs, currentModel === 'roast' ? 0.9 : 0.7, (chunk, full) => {
-            fullReply = full.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
-            bubble.innerHTML = renderMarkdown(fullReply);
-            messages.scrollTop = messages.scrollHeight;
-        });
+            await callAI(msgs, currentModel === 'roast' ? 0.9 : 0.7, (chunk, full) => {
+                fullReply = full.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
+                bubble.innerHTML = renderMarkdown(fullReply);
+                messages.scrollTop = messages.scrollHeight;
+            });
 
-        history.push({ role: 'assistant', content: fullReply });
+            history.push({ role: 'assistant', content: fullReply });
+        }
     } catch (e) {
         document.getElementById('typing-indicator')?.remove();
         if (e.message.includes('503') || e.message.includes('not configured')) {
