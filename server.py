@@ -29,23 +29,18 @@ def rate_limit(key, max_calls=5, window=60):
 
 with app.app_context():
     db.create_all()
-    # Auto-migrate: add new columns if missing
-    try:
-        from sqlalchemy import text
-        with db.engine.connect() as conn:
-            # Check existing columns
-            try:
-                conn.execute(text('SELECT bonus_credits FROM users LIMIT 1'))
-            except Exception:
-                conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
-                conn.commit()
-            try:
-                conn.execute(text('SELECT plan FROM users LIMIT 1'))
-            except Exception:
-                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
-                conn.commit()
-    except Exception as e:
-        print(f'Migration warning: {e}')
+    # Safe migration for existing databases
+    from sqlalchemy import text
+    with db.engine.connect() as conn:
+        # Get existing columns
+        result = conn.execute(text("PRAGMA table_info(users)"))
+        existing = {row[1] for row in result.fetchall()}
+        if 'bonus_credits' not in existing:
+            conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
+            conn.commit()
+        if 'plan' not in existing:
+            conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
+            conn.commit()
 
 # ── Decorators ────────────────────────────────────────────────
 

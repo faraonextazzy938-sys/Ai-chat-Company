@@ -51,14 +51,18 @@ class User(db.Model):
         return self.password_hash == self.hash_password(password)
 
     def to_dict(self):
+        plan = self.plan or 'free'
+        credits = self.credits or 0
+        bonus = self.bonus_credits or 0
+        total = -1 if plan == 'ultra' else bonus + credits
         return {
             'id':               self.id,
             'email':            self.email,
             'username':         self.username,
-            'credits':          self.credits,
-            'bonus_credits':    self.bonus_credits,
-            'total_credits':    self.total_credits(),
-            'plan':             self.plan,
+            'credits':          credits,
+            'bonus_credits':    bonus,
+            'total_credits':    total,
+            'plan':             plan,
             'nomchat_id':       self.nomchat_id,
             'nomchat_username': self.nomchat_username,
             'nomchat_avatar':   self.nomchat_avatar,
