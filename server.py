@@ -209,11 +209,28 @@ def update_user(user):
 
 @app.route('/api/config/groq-key')
 def get_groq_key():
-    """Return Groq key from env — never stored in frontend code"""
     key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
     if not key:
         return jsonify({'error': 'GROQ key not configured'}), 503
     return jsonify({'key': key})
+
+@app.route('/api/chat', methods=['POST'])
+def proxy_chat():
+    """Proxy chat requests to Groq — avoids CORS and client-side key exposure"""
+    key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not key:
+        return jsonify({'error': 'Service not configured'}), 503
+    try:
+        data = request.get_json(silent=True) or {}
+        resp = requests.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
+            json=data,
+            timeout=30
+        )
+        return jsonify(resp.json()), resp.status_code
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 @login_required
 def delete_user(user):
     db.session.delete(user)

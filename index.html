@@ -225,7 +225,6 @@ let _groqKey = null;
 async function getGroqKey() {
   if (_groqKey) return _groqKey;
   try {
-    // No credentials needed — endpoint is public
     const res = await fetch('/api/config/groq-key');
     if (res.ok) { const d = await res.json(); if (d.key) { _groqKey = d.key; return _groqKey; } }
   } catch (_) {}
@@ -233,6 +232,25 @@ async function getGroqKey() {
 }
 // Pre-load on page start
 getGroqKey();
+
+// Send via server proxy (avoids CORS issues for users)
+async function callAI(messages, temperature) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      max_tokens: 400,
+      temperature: temperature || 0.7
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
 
 const SYSTEM = `You are AI Chat Pro — a helpful AI assistant created by AI Chat Company.
 
@@ -384,19 +402,10 @@ async function sendDemo() {
     showTyping();
 
     try {
-        const groqKey = await getGroqKey();
-        if (!groqKey) throw new Error('NO_KEY');
-        const res = await fetch(GROQ_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-            body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
-                messages: [{ role: 'system', content: currentModel === 'roast' ? SYSTEM_ROAST : SYSTEM }, ...history.slice(-10)],
-                max_tokens: 400, temperature: currentModel === 'roast' ? 0.9 : 0.7
-            })
-        });
-        if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-        const data = await res.json();
+        const data = await callAI(
+            [{ role: 'system', content: currentModel === 'roast' ? SYSTEM_ROAST : SYSTEM }, ...history.slice(-10)],
+            currentModel === 'roast' ? 0.9 : 0.7
+        );
         if (data.error) throw new Error(data.error.message || 'API error');
         const raw = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
         const reply = raw.replace(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+/g, '');
@@ -405,14 +414,12 @@ async function sendDemo() {
         history.push({ role: 'assistant', content: reply });
     } catch (e) {
         document.getElementById('typing-indicator')?.remove();
-        if (e.message === 'NO_KEY') {
-            addMsg('⚠️ Сервис временно недоступен. Попробуйте позже или войдите в аккаунт.', 'ai');
-        } else if (e.message === 'API_KEY_INVALID') {
-            addMsg('⚠️ Ошибка авторизации сервиса. Обратитесь к администратору.', 'ai');
-        } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-            addMsg('⚠️ Нет подключения к интернету. Проверьте соединение и попробуйте снова.', 'ai');
+        if (e.message.includes('503') || e.message.includes('not configured')) {
+            addMsg('⚠️ Сервис временно недоступен. Попробуйте позже.', 'ai');
+        } else if (e.message.includes('401') || e.message.includes('403')) {
+            addMsg('⚠️ Ошибка авторизации сервиса.', 'ai');
         } else {
-            addMsg('⚠️ Временная ошибка. Попробуйте снова через несколько секунд.', 'ai');
+            addMsg('⚠️ Временная ошибка. Попробуйте снова.', 'ai');
         }
     }
     loading = false; sendBtn.disabled = false; input.focus();
