@@ -487,3 +487,8 @@ main, .hero, .features-section, .nomchat-section {
 .chat-input-area { background: rgba(255,255,255,0.95) !important; }
 .footer { background: rgba(247,247,248,0.9) !important; backdrop-filter: blur(8px); }
 .nomchat-visual { background: #0a0a0f !important; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
