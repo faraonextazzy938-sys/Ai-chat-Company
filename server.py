@@ -29,6 +29,17 @@ def rate_limit(key, max_calls=5, window=60):
 
 with app.app_context():
     db.create_all()
+    # Auto-migrate: add new columns if they don't exist
+    from sqlalchemy import text, inspect
+    inspector = inspect(db.engine)
+    user_cols = [c['name'] for c in inspector.get_columns('users')] if inspector.has_table('users') else []
+    with db.engine.connect() as conn:
+        if 'bonus_credits' not in user_cols:
+            conn.execute(text('ALTER TABLE users ADD COLUMN bonus_credits INTEGER DEFAULT 300'))
+            conn.commit()
+        if 'plan' not in user_cols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
+            conn.commit()
 
 # ── Decorators ────────────────────────────────────────────────
 
