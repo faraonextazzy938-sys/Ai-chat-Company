@@ -444,19 +444,29 @@ function showTab(name, el) {
 // ── Plan upgrade ──────────────────────────────────────────────
 async function upgradePlan(planId) {
     const names = { pro:'Pro', max:'Max', ultra:'Ultra' };
-    if (!confirm(`Активировать план ${names[planId]}? (демо — без реальной оплаты)`)) return;
-    const res = await fetch('/api/plan/upgrade', {
+    // Try Stripe checkout
+    const res = await fetch('/api/stripe/checkout', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planId })
     });
     if (res.ok) {
-        user = (await res.json()).user || await res.json();
-        toast(`План ${names[planId]} активирован!`, 'ok');
-        setTimeout(() => location.reload(), 1200);
+        const d = await res.json();
+        if (d.url) { window.location.href = d.url; return; }
+    }
+    // Fallback: demo if Stripe not configured
+    const e = await res.json().catch(() => ({}));
+    if (e.error?.includes('not configured') || e.error?.includes('Price not configured')) {
+        if (!confirm(`Активировать план ${names[planId]}? (демо — без реальной оплаты)`)) return;
+        const r2 = await fetch('/api/plan/upgrade', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan: planId })
+        });
+        if (r2.ok) { toast(`План ${names[planId]} активирован!`, 'ok'); setTimeout(() => location.reload(), 1200); }
+        else { const e2 = await r2.json().catch(() => ({})); toast(e2.error || 'Ошибка', 'err'); }
     } else {
-        const e = await res.json().catch(() => ({}));
-        toast(e.error || 'Ошибка', 'err');
+        toast(e.error || 'Ошибка оплаты', 'err');
     }
 }
 

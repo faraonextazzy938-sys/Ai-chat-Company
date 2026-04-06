@@ -480,6 +480,73 @@ def operator_poll(user, sid):
     ).order_by(ChatMessage.created_at).all()
     return jsonify({'messages': [m.to_dict() for m in msgs]})
 
+# ── Stripe Payments ───────────────────────────────────────────
+
+STRIPE_PLANS = {
+    'pro':   {'price_id': os.environ.get('STRIPE_PRICE_PRO',   ''), 'credits': 1000, 'label': 'Pro'},
+    'max':   {'price_id': os.environ.get('STRIPE_PRICE_MAX',   ''), 'credits': 5000, 'label': 'Max'},
+    'ultra': {'price_id': os.environ.get('STRIPE_PRICE_ULTRA', ''), 'credits': -1,   'label': 'Ultra'},
+}
+
+@app.route('/api/stripe/checkout', methods=['POST'])
+@login_required
+def stripe_checkout(user):
+    import stripe as _stripe
+    _stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+    if not _stripe.api_key:
+        return jsonify({'error': 'Payments not configured'}), 503
+
+    data = request.get_json(silent=True) or {}
+    plan = data.get('plan', '')
+    if plan not in STRIPE_PLANS:
+        return jsonify({'error': 'Invalid plan'}), 400
+
+    price_id = STRIPE_PLANS[plan]['price_id']
+    if not price_id:
+        return jsonify({'error': f'Price not configured for {plan}'}), 503
+
+    host = request.host_url.rstrip('/')
+    try:
+        checkout = _stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{'price': price_id, 'quantity': 1}],
+            mode='subscription',
+            success_url=f'{host}/profile.html?payment=success&plan={plan}',
+            cancel_url=f'{host}/profile.html?payment=cancel',
+            client_reference_id=str(user.id),
+            metadata={'user_id': str(user.id), 'plan': plan},
+        )
+        return jsonify({'url': checkout.url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    import stripe as _stripe
+    _stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+    payload = request.get_data()
+    sig = request.headers.get('Stripe-Signature', '')
+
+    try:
+        if webhook_secret:
+            event = _stripe.Webhook.construct_event(payload, sig, webhook_secret)
+        else:
+            event = _stripe.Event.construct_from(request.get_json(), _stripe.api_key)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+    if event['type'] in ('checkout.session.completed', 'invoice.payment_succeeded'):
+        obj = event['data']['object']
+        user_id = int(obj.get('client_reference_id') or obj.get('metadata', {}).get('user_id', 0))
+        plan    = obj.get('metadata', {}).get('plan', '')
+        if user_id and plan and plan in STRIPE_PLANS:
+            cfg = STRIPE_PLANS[plan]
+            _set_credits(user_id, credits=cfg['credits'], plan=plan)
+
+    return jsonify({'ok': True})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)

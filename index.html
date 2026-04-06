@@ -21,6 +21,7 @@
             <span class="logo-text">AI Chat Company</span>
         </a>
         <nav class="nav">
+            <a href="/chat.html" class="nav-link" style="font-weight:600">💬 Chat</a>
             <a href="#demo" class="nav-link">Try it</a>
             <a href="#features" class="nav-link">Features</a>
             <a href="#nomchat" class="nav-link">Nomchat ID</a>
@@ -608,6 +609,8 @@ async function sendDemo() {
         }
     }
     loading = false; sendBtn.disabled = false; input.focus();
+    // Update credits counter in header
+    updateCreditsDisplay();
 }
 
 // ── Image upload ─────────────────────────────────────────────
@@ -705,6 +708,22 @@ function showWelcome(user) {
     setTimeout(() => banner.remove(), 5000);
 }
 
+// ── Credits display update ────────────────────────────────────
+async function updateCreditsDisplay() {
+    try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) return;
+        const user = await res.json();
+        const total = user.total_credits === -1 ? '∞' : (user.total_credits ?? 0);
+        const credColor = total === '∞' ? '#f59e0b' : total <= 10 ? '#ef4444' : total <= 50 ? '#f59e0b' : '#10a37f';
+        const credEl = document.querySelector('#headerActions div[style*="кредитов"], #headerActions div');
+        if (credEl && credEl.textContent.includes('кредит')) {
+            credEl.style.color = credColor;
+            credEl.innerHTML = `⚡ ${total} кредитов`;
+        }
+    } catch (_) {}
+}
+
 // ── Auth modal ────────────────────────────────────────────────
 function showAuthModal() {
     if (document.getElementById('_authModal')) return;
@@ -762,18 +781,31 @@ function showNoCreditsModal() {
 
 async function buyPlan(planId) {
     document.getElementById('_credModal')?.remove();
-    const res = await fetch('/api/plan/upgrade', {
+    const res = await fetch('/api/stripe/checkout', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planId })
     });
     if (res.ok) {
         const d = await res.json();
-        showPlanSuccess(planId, d.user);
+        if (d.url) window.location.href = d.url;
     } else {
         const e = await res.json().catch(() => ({}));
         if (e.error === 'Unauthorized') { showAuthModal(); return; }
-        alert(e.error || 'Ошибка');
+        // Fallback: demo mode if Stripe not configured
+        if (e.error?.includes('not configured') || e.error?.includes('Price not configured')) {
+            const demoRes = await fetch('/api/plan/upgrade', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan: planId })
+            });
+            if (demoRes.ok) {
+                const d = await demoRes.json();
+                showPlanSuccess(planId, d.user);
+            }
+        } else {
+            alert(e.error || 'Ошибка');
+        }
     }
 }
 
