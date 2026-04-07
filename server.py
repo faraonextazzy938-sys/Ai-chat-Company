@@ -357,6 +357,44 @@ def proxy_chat(user):
     try:
         data     = request.get_json(silent=True) or {}
         messages = data.get('messages', [])
+        
+        # Smart Agent System - автоматически определяет тип запроса
+        last_user_msg = ''
+        for m in reversed(messages):
+            if m.get('role') == 'user':
+                content = m.get('content', '')
+                if isinstance(content, str):
+                    last_user_msg = content.lower()
+                    break
+        
+        # Определяем специализацию по ключевым словам
+        agent_system = None
+        if any(word in last_user_msg for word in ['код', 'code', 'программ', 'function', 'class', 'def', 'import', 'bug', 'ошибка', 'debug']):
+            agent_system = '💻 You are an expert programmer. Provide clean, efficient code with explanations. Use markdown code blocks. Focus on best practices and optimization.'
+        elif any(word in last_user_msg for word in ['напиши', 'write', 'story', 'статья', 'article', 'текст', 'essay', 'creative']):
+            agent_system = '✍️ You are a creative writer. Write engaging, well-structured content. Be imaginative and descriptive. Use vivid language and compelling narratives.'
+        elif any(word in last_user_msg for word in ['анализ', 'analyze', 'данные', 'data', 'статистика', 'statistics', 'график', 'chart', 'trend']):
+            agent_system = '📊 You are a data analyst. Provide insights, analyze data, and explain trends clearly with numbers and facts. Use structured analysis and logical reasoning.'
+        elif any(word in last_user_msg for word in ['объясни', 'explain', 'как', 'how', 'почему', 'why', 'что такое', 'what is', 'учи', 'teach']):
+            agent_system = '👨‍🏫 You are a patient teacher. Explain concepts clearly, use examples, and break down complex topics step by step. Make learning easy and engaging.'
+        elif any(word in last_user_msg for word in ['бизнес', 'business', 'маркетинг', 'marketing', 'стратегия', 'strategy', 'продажи', 'sales']):
+            agent_system = '💼 You are a business consultant. Provide strategic advice, market insights, and practical business solutions. Focus on ROI and actionable recommendations.'
+        elif any(word in last_user_msg for word in ['дизайн', 'design', 'ui', 'ux', 'интерфейс', 'interface', 'layout']):
+            agent_system = '🎨 You are a UX/UI designer. Provide design advice, best practices, and user-centered solutions. Focus on usability and aesthetics.'
+        
+        # Добавляем system prompt агента если определен
+        if agent_system and messages:
+            # Проверяем есть ли уже system message
+            has_system = any(m.get('role') == 'system' for m in messages)
+            if not has_system:
+                messages = [{'role': 'system', 'content': agent_system}] + messages
+            else:
+                # Заменяем существующий system message
+                for i, m in enumerate(messages):
+                    if m.get('role') == 'system':
+                        messages[i]['content'] = agent_system
+                        break
+        
         has_image = any(
             isinstance(m.get('content'), list) and any(c.get('type') == 'image_url' for c in m['content'])
             for m in messages
