@@ -672,6 +672,199 @@ def stripe_webhook():
 
     return jsonify({'ok': True})
 
+# ── Image Generation ──────────────────────────────────────────
+
+@app.route('/api/image/generate', methods=['POST'])
+@login_required
+def generate_image(user):
+    credits, bonus, plan = _get_credits(user.id)
+    total = -1 if plan == 'ultra' else bonus + credits
+    if plan != 'ultra' and total < 5:
+        return jsonify({'error': 'Need at least 5 credits for image generation'}), 402
+
+    data = request.get_json(silent=True) or {}
+    prompt = data.get('prompt', '').strip()
+    if not prompt:
+        return jsonify({'error': 'Prompt required'}), 400
+
+    try:
+        # Try HuggingFace Stable Diffusion
+        hf_resp = requests.post(
+            'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+            headers={'Content-Type': 'application/json'},
+            json={'inputs': prompt},
+            timeout=30
+        )
+        
+        if hf_resp.ok and hf_resp.headers.get('content-type', '').startswith('image/'):
+            import base64
+            img_b64 = base64.b64encode(hf_resp.content).decode('utf-8')
+            
+            # Deduct 5 credits
+            if plan != 'ultra':
+                if bonus >= 5:
+                    _set_credits(user.id, bonus_credits=bonus - 5)
+                elif bonus > 0:
+                    _set_credits(user.id, bonus_credits=0, credits=credits - (5 - bonus))
+                else:
+                    _set_credits(user.id, credits=credits - 5)
+            
+            return jsonify({
+                'success': True,
+                'image': f'data:image/png;base64,{img_b64}',
+                'credits_remaining': max(0, total - 5) if total >= 0 else -1
+            })
+        else:
+            return jsonify({'error': 'Image generation service unavailable'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── Voice Assistant ───────────────────────────────────────────
+
+@app.route('/api/voice/transcribe', methods=['POST'])
+@login_required
+def transcribe_audio(user):
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file'}), 400
+    
+    audio_file = request.files['audio']
+    
+    try:
+        # Use OpenAI Whisper API if available
+        openai_key = os.environ.get('OPENAI_KEY', '')
+        if openai_key:
+            files = {'file': (audio_file.filename, audio_file.stream, audio_file.content_type)}
+            data = {'model': 'whisper-1'}
+            resp = requests.post(
+                'https://api.openai.com/v1/audio/transcriptions',
+                headers={'Authorization': f'Bearer {openai_key}'},
+                files=files,
+                data=data,
+                timeout=30
+            )
+            if resp.ok:
+                result = resp.json()
+                return jsonify({'text': result.get('text', '')})
+        
+        # Fallback: return error
+        return jsonify({'error': 'Voice transcription not configured'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/speak', methods=['POST'])
+@login_required
+def text_to_speech(user):
+    data = request.get_json(silent=True) or {}
+    text = data.get('text', '').strip()
+    if not text:
+        return jsonify({'error': 'Text required'}), 400
+    
+    try:
+        # Use browser's built-in TTS (client-side)
+        # This endpoint just validates the request
+        return jsonify({'success': True, 'text': text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── AI Agents ─────────────────────────────────────────────────
+
+AGENTS = {
+    'coder': {
+        'name': 'Code Assistant',
+        'system': 'You are an expert programmer. Provide clean, efficient code with explanations. Use markdown code blocks.',
+        'icon': '💻'
+    },
+    'writer': {
+        'name': 'Creative Writer',
+        'system': 'You are a creative writer. Write engaging, well-structured content. Be imaginative and descriptive.',
+        'icon': '✍️'
+    },
+    'analyst': {
+        'name': 'Data Analyst',
+        'system': 'You are a data analyst. Provide insights, analyze data, and explain trends clearly with numbers and facts.',
+        'icon': '📊'
+    },
+    'teacher': {
+        'name': 'Teacher',
+        'system': 'You are a patient teacher. Explain concepts clearly, use examples, and break down complex topics step by step.',
+        'icon': '👨‍🏫'
+    }
+}
+
+@app.route('/api/agents')
+def get_agents():
+    return jsonify(AGENTS)
+
+@app.route('/api/agent/chat', methods=['POST'])
+@login_required
+def agent_chat(user):
+    data = request.get_json(silent=True) or {}
+    agent_id = data.get('agent', 'coder')
+    messages = data.get('messages', [])
+    
+    if agent_id not in AGENTS:
+        return jsonify({'error': 'Invalid agent'}), 400
+    
+    agent = AGENTS[agent_id]
+    
+    # Prepend agent system message
+    full_messages = [{'role': 'system', 'content': agent['system']}] + messages
+    
+    # Use the same chat logic as /api/chat
+    return proxy_chat(user)
+
+# ── Website Preview ───────────────────────────────────────────
+
+@app.route('/api/preview/url', methods=['POST'])
+@login_required
+def preview_url(user):
+    data = request.get_json(silent=True) or {}
+    url = data.get('url', '').strip()
+    
+    if not url:
+        return jsonify({'error': 'URL required'}), 400
+    
+    # Validate URL
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+    
+    try:
+        # Use screenshot API (screenshotapi.net or similar)
+        screenshot_key = os.environ.get('SCREENSHOT_API_KEY', '')
+        
+        if screenshot_key:
+            resp = requests.get(
+                'https://shot.screenshotapi.net/screenshot',
+                params={
+                    'token': screenshot_key,
+                    'url': url,
+                    'width': 1280,
+                    'height': 720,
+                    'output': 'json',
+                    'file_type': 'png',
+                    'wait_for_event': 'load'
+                },
+                timeout=30
+            )
+            
+            if resp.ok:
+                result = resp.json()
+                return jsonify({
+                    'success': True,
+                    'screenshot': result.get('screenshot', ''),
+                    'url': url
+                })
+        
+        # Fallback: return placeholder
+        return jsonify({
+            'success': True,
+            'screenshot': f'https://via.placeholder.com/1280x720/1a1a1a/ffffff?text=Preview+of+{url}',
+            'url': url,
+            'fallback': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)

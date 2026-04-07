@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Features - AI Chat Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1c1c1c;--bg4:#252525;
+  --border:#2a2a2a;--text:#e5e5e5;--text2:#888;--text3:#444;
+  --accent:#10a37f;--font:'Segoe UI',-apple-system,Arial,sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:30px}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;text-decoration:none;color:var(--text)}
+.logo-icon{width:32px;height:32px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.nav{display:flex;gap:20px}
+.nav a{color:var(--text2);text-decoration:none;transition:color .2s}
+.nav a:hover{color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:30px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .2s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card-icon{font-size:40px;margin-bottom:12px}
+.card h2{font-size:20px;margin-bottom:8px}
+.card p{color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:16px}
+.btn{padding:10px 20px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn:hover{background:#0d8a6b}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal.active{display:flex}
+.modal-content{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:30px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-header h2{font-size:22px}
+.close-btn{background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s}
+.close-btn:hover{background:var(--bg3);color:var(--text)}
+.input-group{margin-bottom:20px}
+.input-group label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)}
+.input-group input,.input-group textarea,.input-group select{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s}
+.input-group input:focus,.input-group textarea:focus,.input-group select:focus{border-color:var(--accent)}
+.input-group textarea{resize:vertical;min-height:100px}
+.result{margin-top:20px;padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
+.result img{max-width:100%;border-radius:8px;margin-top:10px}
+.result pre{background:var(--bg);padding:12px;border-radius:6px;overflow-x:auto;font-size:13px}
+.agents-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.agent-card{padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;text-align:center}
+.agent-card:hover{border-color:var(--accent);background:var(--bg4)}
+.agent-card.active{border-color:var(--accent);background:var(--bg4)}
+.agent-icon{font-size:32px;margin-bottom:8px}
+.agent-name{font-size:14px;font-weight:600}
+.loading{display:inline-block;width:16px;height:16px;border:2px solid var(--text3);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.voice-controls{display:flex;gap:10px;align-items:center}
+.voice-btn{width:48px;height:48px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:20px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.voice-btn:hover{background:#0d8a6b;transform:scale(1.05)}
+.voice-btn.recording{background:#f44;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="/" class="logo">
+      <div class="logo-icon">🤖</div>
+      <span>AI Chat Pro</span>
+    </a>
+    <nav class="nav">
+      <a href="/chat.html">Chat</a>
+      <a href="/features.html">Features</a>
+      <a href="/profile.html">Profile</a>
+    </nav>
+  </div>
+
+  <h1 style="font-size:32px;margin-bottom:10px">AI Features</h1>
+  <p style="color:var(--text2);margin-bottom:30px">Explore advanced AI capabilities</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon">🎨</div>
+      <h2>Image Generation</h2>
+      <p>Create stunning images from text descriptions using AI</p>
+      <button class="btn" onclick="openModal('imageGen')">Generate Image</button>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">🎤</div>
+      <h2>Voice Assistant</h2>
+      <p>Talk to AI using voice input and get spoken responses</p>
+      <button class="btn" onclick="openModal('voice')">Try Voice</button>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <h2>AI Agents</h2>
+      <p>Specialized AI assistants for coding, writing, analysis, and more</p>
+      <button class="btn" onclick="openModal('agents')">Choose Agent</button>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <h2>Website Preview</h2>
+      <p>Get instant screenshots and previews of any website</p>
+      <button class="btn" onclick="openModal('preview')">Preview URL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Generation Modal -->
+<div class="modal" id="imageGenModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🎨 Generate Image</h2>
+      <button class="close-btn" onclick="closeModal('imageGen')">&times;</button>
+    </div>
+    <div class="input-group">
+      <label>Describe the image you want to create</label>
+      <textarea id="imagePrompt" placeholder="A beautiful sunset over mountains..."></textarea>
+    </div>
+    <button class="btn" onclick="generateImage()" id="genBtn">Generate (5 credits)</button>
+    <div class="result" id="imageResult" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Voice Assistant Modal -->
+<div class="modal" id="voiceModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🎤 Voice Assistant</h2>
+      <button class="close-btn" onclick="closeModal('voice')">&times;</button>
+    </div>
+    <div class="voice-controls">
+      <button class="voice-btn" onclick="toggleRecording()" id="recordBtn">🎤</button>
+      <div style="flex:1">
+        <div id="voiceStatus">Click microphone to start</div>
+        <div id="voiceTranscript" style="margin-top:8px;color:var(--text2);font-size:13px"></div>
+      </div>
+    </div>
+    <div class="result" id="voiceResult" style="display:none;margin-top:20px"></div>
+  </div>
+</div>
+
+<!-- AI Agents Modal -->
+<div class="modal" id="agentsModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🤖 AI Agents</h2>
+      <button class="close-btn" onclick="closeModal('agents')">&times;</button>
+    </div>
+    <div class="agents-grid" id="agentsList"></div>
+    <div class="input-group">
+      <label>Your message</label>
+      <textarea id="agentPrompt" placeholder="Ask your question..."></textarea>
+    </div>
+    <button class="btn" onclick="chatWithAgent()" id="agentBtn">Send</button>
+    <div class="result" id="agentResult" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Website Preview Modal -->
+<div class="modal" id="previewModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🌐 Website Preview</h2>
+      <button class="close-btn" onclick="closeModal('preview')">&times;</button>
+    </div>
+    <div class="input-group">
+      <label>Enter website URL</label>
+      <input type="url" id="previewUrl" placeholder="https://example.com">
+    </div>
+    <button class="btn" onclick="previewWebsite()" id="previewBtn">Get Preview</button>
+    <div class="result" id="previewResult" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+let selectedAgent = 'coder';
+let mediaRecorder = null;
+let audioChunks = [];
+
+// Check auth
+(async()=>{
+  try{
+    const r = await fetch('/api/auth/me', {credentials:'include'});
+    if(!r.ok) location.href='/login.html';
+  }catch{
+    location.href='/login.html';
+  }
+})();
+
+// Load agents
+(async()=>{
+  try{
+    const r = await fetch('/api/agents');
+    const agents = await r.json();
+    const list = document.getElementById('agentsList');
+    list.innerHTML = Object.entries(agents).map(([id, agent]) => 
+      `<div class="agent-card ${id==='coder'?'active':''}" onclick="selectAgent('${id}')">
+        <div class="agent-icon">${agent.icon}</div>
+        <div class="agent-name">${agent.name}</div>
+      </div>`
+    ).join('');
+  }catch(e){
+    console.error('Failed to load agents:', e);
+  }
+})();
+
+function openModal(type) {
+  document.getElementById(type + 'Modal').classList.add('active');
+}
+
+function closeModal(type) {
+  document.getElementById(type + 'Modal').classList.remove('active');
+}
+
+function selectAgent(id) {
+  selectedAgent = id;
+  document.querySelectorAll('.agent-card').forEach(el => el.classList.remove('active'));
+  event.target.closest('.agent-card').classList.add('active');
+}
+
+async function generateImage() {
+  const prompt = document.getElementById('imagePrompt').value.trim();
+  if(!prompt) return alert('Please enter a description');
+  
+  const btn = document.getElementById('genBtn');
+  const result = document.getElementById('imageResult');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> Generating...';
+  result.style.display = 'none';
+  
+  try {
+    const r = await fetch('/api/image/generate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    
+    const data = await r.json();
+    
+    if(r.ok && data.success) {
+      result.innerHTML = `<p>✅ Image generated!</p><img src="${data.image}" alt="Generated">
+        <p style="margin-top:10px;font-size:12px;color:var(--text2)">Credits remaining: ${data.credits_remaining===-1?'∞':data.credits_remaining}</p>`;
+      result.style.display = 'block';
+    } else {
+      result.innerHTML = `<p>❌ ${data.error || 'Failed to generate image'}</p>`;
+      result.style.display = 'block';
+    }
+  } catch(e) {
+    result.innerHTML = `<p>❌ Error: ${e.message}</p>`;
+    result.style.display = 'block';
+  }
+  
+  btn.disabled = false;
+  btn.textContent = 'Generate (5 credits)';
+}
+
+async function toggleRecording() {
+  const btn = document.getElementById('recordBtn');
+  const status = document.getElementById('voiceStatus');
+  
+  if(mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    status.textContent = 'Processing...';
+  } else {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, {type: 'audio/webm'});
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
+      btn.classList.add('recording');
+      btn.textContent = '⏹️';
+      status.textContent = 'Recording... Click to stop';
+    } catch(e) {
+      alert('Microphone access denied: ' + e.message);
+    }
+  }
+}
+
+async function transcribeAudio(blob) {
+  const status = document.getElementById('voiceStatus');
+  const transcript = document.getElementById('voiceTranscript');
+  const result = document.getElementById('voiceResult');
+  
+  try {
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+    
+    const r = await fetch('/api/voice/transcribe', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    });
+    
+    const data = await r.json();
+    
+    if(r.ok && data.text) {
+      transcript.textContent = `You said: "${data.text}"`;
+      status.textContent = 'Getting AI response...';
+      
+      // Get AI response
+      const chatR = await fetch('/api/chat', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          messages: [{role: 'user', content: data.text}]
+        })
+      });
+      
+      const chatData = await chatR.json();
+      const reply = chatData.choices?.[0]?.message?.content || 'No response';
+      
+      result.innerHTML = `<p><strong>AI:</strong> ${reply}</p>`;
+      result.style.display = 'block';
+      status.textContent = 'Done! Click to record again';
+      
+      // Speak response
+      speakText(reply);
+    } else {
+      status.textContent = 'Error: ' + (data.error || 'Transcription failed');
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+function speakText(text) {
+  if('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1.0;
+    speechSynthesis.speak(utterance);
+  }
+}
+
+async function chatWithAgent() {
+  const prompt = document.getElementById('agentPrompt').value.trim();
+  if(!prompt) return alert('Please enter a message');
+  
+  const btn = document.getElementById('agentBtn');
+  const result = document.getElementById('agentResult');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> Thinking...';
+  result.style.display = 'none';
+  
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        messages: [{role: 'user', content: prompt}],
+        agent: selectedAgent
+      })
+    });
+    
+    const data = await r.json();
+    const reply = data.choices?.[0]?.message?.content || 'No response';
+    
+    result.innerHTML = `<pre>${escapeHtml(reply)}</pre>`;
+    result.style.display = 'block';
+  } catch(e) {
+    result.innerHTML = `<p>❌ Error: ${e.message}</p>`;
+    result.style.display = 'block';
+  }
+  
+  btn.disabled = false;
+  btn.textContent = 'Send';
+}
+
+async function previewWebsite() {
+  const url = document.getElementById('previewUrl').value.trim();
+  if(!url) return alert('Please enter a URL');
+  
+  const btn = document.getElementById('previewBtn');
+  const result = document.getElementById('previewResult');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> Loading...';
+  result.style.display = 'none';
+  
+  try {
+    const r = await fetch('/api/preview/url', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    
+    const data = await r.json();
+    
+    if(r.ok && data.success) {
+      result.innerHTML = `<p>✅ Preview of <a href="${data.url}" target="_blank">${data.url}</a></p>
+        <img src="${data.screenshot}" alt="Screenshot">
+        ${data.fallback ? '<p style="margin-top:10px;font-size:12px;color:var(--text2)">Using placeholder (configure SCREENSHOT_API_KEY for real previews)</p>' : ''}`;
+      result.style.display = 'block';
+    } else {
+      result.innerHTML = `<p>❌ ${data.error || 'Failed to preview'}</p>`;
+      result.style.display = 'block';
+    }
+  } catch(e) {
+    result.innerHTML = `<p>❌ Error: ${e.message}</p>`;
+    result.style.display = 'block';
+  }
+  
+  btn.disabled = false;
+  btn.textContent = 'Get Preview';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
