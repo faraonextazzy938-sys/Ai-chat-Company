@@ -1,0 +1,19 @@
+{
+  "name": "ai-chat-ide",
+  "version": "1.0.0",
+  "description": "AI Chat IDE by AI Chat Company",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.aichatcompany.ide",
+    "productName": "AI Chat IDE",
+    "win": { "target": ["portable"], "artifactName": "AI-Chat-IDE.exe" }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
