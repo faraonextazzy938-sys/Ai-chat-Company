@@ -333,8 +333,12 @@ def proxy_chat(user):
     total = -1 if plan == 'ultra' else bonus + credits
     if plan != 'ultra' and total <= 0:
         return jsonify({'error': 'no_credits', 'message': 'No credits left.'}), 402
-    key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
-    if not key: return jsonify({'error': 'Service not configured'}), 503
+
+    or_key   = os.environ.get('OPENROUTER_KEY', '')
+    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not or_key and not groq_key:
+        return jsonify({'error': 'Service not configured'}), 503
+
     try:
         data   = request.get_json(silent=True) or {}
         stream = data.get('stream', False)
@@ -343,17 +347,35 @@ def proxy_chat(user):
             any(c.get('type') == 'image_url' for c in m['content'])
             for m in data.get('messages', [])
         )
-        if has_image:
-            data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'
-            data['stream'] = False; stream = False
-        resp = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
-            json=data, timeout=60, stream=stream
-        )
+
+        if or_key:
+            if has_image:
+                data['model'] = 'meta-llama/llama-4-scout'
+                data['stream'] = False; stream = False
+            resp = requests.post(
+                'https://openrouter.ai/api/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {or_key}',
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://aichatcompany.up.railway.app',
+                    'X-Title': 'AI Chat Company',
+                },
+                json=data, timeout=60, stream=stream
+            )
+        else:
+            if has_image:
+                data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'
+                data['stream'] = False; stream = False
+            resp = requests.post(
+                'https://api.groq.com/openai/v1/chat/completions',
+                headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
+                json=data, timeout=60, stream=stream
+            )
+
         if resp.ok and plan != 'ultra':
             if bonus > 0: _set_credits(user.id, bonus_credits=bonus - 1)
             elif credits > 0: _set_credits(user.id, credits=credits - 1)
+
         if stream:
             def generate():
                 for chunk in resp.iter_content(chunk_size=None):
