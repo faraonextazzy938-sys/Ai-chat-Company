@@ -4,7 +4,6 @@ from database import db, User, ChatSession, ChatMessage, PLANS
 from datetime import datetime, timedelta
 from functools import wraps
 import secrets, os, re, requests, traceback
-import google.generativeai as genai
 
 app = Flask(__name__, static_folder='.')
 app.secret_key = os.environ.get('SECRET_KEY', 'aichat-company-secret-key-2026-stable')
@@ -342,10 +341,11 @@ def proxy_chat(user):
     if plan != 'ultra' and total <= 0:
         return jsonify({'error': 'no_credits', 'message': 'No credits left.'}), 402
 
-    claude_key = os.environ.get('ANTHROPIC_KEY', '')
     gemini_key = os.environ.get('GEMINI_KEY', '')
     or_key     = os.environ.get('OPENROUTER_KEY', '')
     groq_key   = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not gemini_key and not or_key and not groq_key:
+        return jsonify({'error': 'Service not configured'}), 503
 
     try:
         data     = request.get_json(silent=True) or {}
@@ -360,133 +360,76 @@ def proxy_chat(user):
                 if bonus > 0: _set_credits(user.id, bonus_credits=bonus - 1)
                 elif credits > 0: _set_credits(user.id, credits=credits - 1)
 
-        # ── Claude (Anthropic - highest quality) ─────────────
-        if claude_key:
-            try:
-                # Convert messages to Claude format
-                claude_messages = []
-                system_msg = ""
-                for m in messages:
-                    role = m.get('role', 'user')
-                    content = m.get('content', '')
-                    if role == 'system':
-                        system_msg = content if isinstance(content, str) else ''
-                    elif role in ['user', 'assistant']:
-                        if isinstance(content, str) and content.strip():
-                            claude_messages.append({'role': role, 'content': content.strip()})
-                
-                # Ensure we have at least one message
-                if not claude_messages:
-                    raise ValueError("No valid messages for Claude")
-                
-                payload = {
-                    'model': 'claude-3-5-sonnet-20241022',
-                    'max_tokens': 2048,
-                    'messages': claude_messages
-                }
-                
-                if system_msg:
-                    payload['system'] = system_msg
-                
-                response = requests.post(
-                    'https://api.anthropic.com/v1/messages',
-                    headers={
-                        'x-api-key': claude_key,
-                        'anthropic-version': '2023-06-01',
-                        'content-type': 'application/json'
-                    },
-                    json=payload,
-                    timeout=60
-                )
-                
-                if response.ok:
-                    result = response.json()
-                    if result.get('content') and len(result['content']) > 0:
-                        text = result['content'][0]['text']
-                        deduct()
-                        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
-                                        'credits_remaining': max(0, total - 1) if total >= 0 else -1})
-                else:
-                    error_msg = f'Claude API error: {response.status_code}'
-                    try:
-                        error_data = response.json()
-                        if 'error' in error_data:
-                            error_msg = f"Claude API: {error_data['error'].get('message', error_msg)}"
-                    except:
-                        pass
-                    app.logger.warning(f'{error_msg} - {response.text}')
-                    # Fall through to backup bot instead of returning error
-            except Exception as e:
-                app.logger.warning(f'Claude error: {e}')
-                # Fall through to backup bot
-
-        # ── Simple Rule-Based Bot (always works) ─────────────
-        # Extract last user message
-        last_msg = ""
-        for m in reversed(messages):
-            if m.get('role') == 'user':
+        # ── Gemini (primary) ──────────────────────────────────
+        if gemini_key:
+            contents = []
+            system_text = ''
+            for m in messages:
+                role = m.get('role', 'user')
                 content = m.get('content', '')
-                if isinstance(content, str):
-                    last_msg = content.lower()
-                    break
-        
-        # Simple responses with better matching
-        if any(word in last_msg for word in ['привет', 'hello', 'hi', 'здравствуй', 'добрый день', 'hey']):
-            response = "Привет! Я AI Chat Pro, созданный AI Chat Company. Чем могу помочь? 🤖"
-        elif any(word in last_msg for word in ['как дела', 'how are you', 'как ты']):
-            response = "Отлично, спасибо! Готов помочь с любыми вопросами. Что вас интересует?"
-        elif any(word in last_msg for word in ['что ты умеешь', 'what can you do', 'твои возможности', 'помощь']):
-            response = "Я могу помочь с:\n\n✅ Ответами на вопросы\n✅ Написанием и объяснением кода\n✅ Решением задач\n✅ Переводом текста\n✅ Генерацией идей\n\nЗадавайте любые вопросы!"
-        elif any(word in last_msg for word in ['код', 'code', 'программ', 'python', 'javascript', 'java']):
-            response = "Конечно! Я помогу с кодом. Какой язык программирования вас интересует? (Python, JavaScript, Java, C++, и другие)"
-        elif any(word in last_msg for word in ['спасибо', 'thanks', 'thank you', 'благодарю']):
-            response = "Пожалуйста! Рад помочь. Если есть ещё вопросы - обращайтесь! 😊"
-        elif any(word in last_msg for word in ['кто ты', 'who are you', 'что ты такое']):
-            response = "Я AI Chat Pro — AI-ассистент от AI Chat Company. Использую модель Mistral 7B для ответов на ваши вопросы. Создан чтобы помогать с информацией, кодом и решением задач!"
-        elif any(word in last_msg for word in ['пока', 'bye', 'goodbye', 'до свидания']):
-            response = "До встречи! Возвращайтесь, если понадобится помощь. Удачи! 👋"
-        else:
-            # Try HuggingFace first
-            try:
-                prompt = ""
-                for m in messages:
-                    role = m.get('role', 'user')
-                    content = m.get('content', '')
-                    if isinstance(content, str):
-                        if role == 'system':
-                            prompt += f"System: {content}\n\n"
-                        elif role == 'user':
-                            prompt += f"User: {content}\n\n"
-                        elif role == 'assistant':
-                            prompt += f"Assistant: {content}\n\n"
-                prompt += "Assistant:"
-
-                hf_resp = requests.post(
-                    'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
-                    headers={'Content-Type': 'application/json'},
-                    json={'inputs': prompt, 'parameters': {'max_new_tokens': 512, 'temperature': 0.7, 'return_full_text': False}},
-                    timeout=15
-                )
-                if hf_resp.ok:
-                    result = hf_resp.json()
-                    if isinstance(result, list) and len(result) > 0:
-                        text = result[0].get('generated_text', '').strip()
-                        if text and len(text) > 10:
-                            response = text
-                        else:
-                            response = f"Понял ваш вопрос про '{last_msg[:50]}...'. Это интересная тема! К сожалению, сейчас не могу дать развёрнутый ответ, но могу помочь с базовой информацией."
-                    else:
-                        response = "Интересный вопрос! Давайте разберём его подробнее. Что именно вас интересует?"
+                if role == 'system':
+                    system_text = content if isinstance(content, str) else ''
+                    continue
+                g_role = 'user' if role == 'user' else 'model'
+                if isinstance(content, list):
+                    parts = []
+                    for c in content:
+                        if c.get('type') == 'text': parts.append({'text': c['text']})
+                        elif c.get('type') == 'image_url':
+                            url = c['image_url']['url']
+                            if url.startswith('data:'):
+                                mime_type = url.split(':')[1].split(';')[0]
+                                b64 = url.split(',', 1)[1]
+                                parts.append({'inline_data': {'mime_type': mime_type, 'data': b64}})
+                    contents.append({'role': g_role, 'parts': parts})
                 else:
-                    response = "Понял вас! Это хороший вопрос. Могу помочь с дополнительной информацией - уточните, что именно вас интересует?"
-            except Exception as e:
-                app.logger.warning(f'HuggingFace error: {e}')
-                response = "Спасибо за вопрос! Я обрабатываю информацию. Можете переформулировать или задать более конкретный вопрос?"
-        
-        deduct()
-        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': response}}],
-                        'credits_remaining': max(0, total - 1) if total >= 0 else -1})
+                    contents.append({'role': g_role, 'parts': [{'text': content}]})
 
+            payload = {'contents': contents, 'generationConfig': {'maxOutputTokens': 2048, 'temperature': 0.8}}
+            if system_text:
+                payload['system_instruction'] = {'parts': [{'text': system_text}]}
+
+            g_model = 'gemini-2.0-flash'
+            resp = requests.post(
+                f'https://generativelanguage.googleapis.com/v1beta/models/{g_model}:generateContent?key={gemini_key}',
+                headers={'Content-Type': 'application/json'},
+                json=payload, timeout=60
+            )
+            if resp.ok:
+                text = resp.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                deduct()
+                return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
+                                'credits_remaining': max(0, total - 1) if total >= 0 else -1})
+
+        # ── OpenRouter (fallback) ─────────────────────────────
+        if or_key:
+            resp = requests.post(
+                'https://openrouter.ai/api/v1/chat/completions',
+                headers={'Authorization': f'Bearer {or_key}', 'Content-Type': 'application/json',
+                         'HTTP-Referer': 'https://aichatcompany.up.railway.app', 'X-Title': 'AI Chat Company'},
+                json=data, timeout=60
+            )
+            if resp.ok:
+                deduct()
+                result = resp.json()
+                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
+                return jsonify(result)
+
+        # ── Groq (last resort) ────────────────────────────────
+        if groq_key:
+            if has_image: data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'; data['stream'] = False
+            resp = requests.post(
+                'https://api.groq.com/openai/v1/chat/completions',
+                headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
+                json=data, timeout=60
+            )
+            if resp.ok:
+                deduct()
+                result = resp.json()
+                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
+                return jsonify(result)
+
+        return jsonify({'error': 'All AI services unavailable'}), 503
     except Exception as e:
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
