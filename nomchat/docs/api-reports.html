@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Reports API — Nomchat ID Docs</title><link rel="stylesheet" href="/docs/style.css"></head>
+<body>
+<nav class="sidebar">
+    <div class="sidebar-logo"><span class="logo-icon">??</span><span class="logo-name">NOMCHAT</span><span class="logo-badge">DOCS</span></div>
+    <div class="sidebar-nav">
+        <div class="nav-section">Overview</div>
+        <a href="/docs/index.html" class="nav-link">Introduction</a>
+        <a href="/docs/cookies.html" class="nav-link">Cookie Policy</a>
+        <a href="/docs/privacy.html" class="nav-link">Privacy Policy</a>
+        <a href="/docs/terms.html" class="nav-link">Terms of Service</a>
+        <div class="nav-section">API</div>
+        <a href="/docs/api-auth.html" class="nav-link">Authentication</a>
+        <a href="/docs/api-users.html" class="nav-link">Users</a>
+        <a href="/docs/api-reports.html" class="nav-link active">Reports</a>
+    </div>
+    <div class="sidebar-footer"><a href="https://nomchat-id.up.railway.app" target="_blank" class="back-link"> Back to Nomchat ID</a></div>
+</nav>
+<main class="content"><div class="content-inner">
+    <div class="breadcrumb">API  Reports</div>
+    <h1>Reports API</h1>
+    <p class="lead">Submit and manage support reports.</p>
+    <div class="endpoint"><div class="endpoint-header"><span class="method post">POST</span><code>/api/reports</code></div><p>Submit a report. Requires authentication.</p><h4>Body</h4><pre><code>{ "subject": "...", "message": "...", "category": "general|bug|abuse|ban_appeal" }</code></pre></div>
+    <div class="endpoint"><div class="endpoint-header"><span class="method get">GET</span><code>/api/reports</code></div><p>Get all reports. Requires support/admin/dev role.</p></div>
+    <div class="endpoint"><div class="endpoint-header"><span class="method post">POST</span><code>/api/reports/{id}/respond</code></div><p>Respond to a report. Requires support/admin/dev role.</p><h4>Body</h4><pre><code>{ "response": "...", "status": "resolved|in_progress|closed" }</code></pre></div>
+</div></main>
+</body></html>

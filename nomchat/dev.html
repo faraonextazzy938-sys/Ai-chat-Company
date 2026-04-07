@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Panel — Nomchat ID</title>
+    <style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --bg:#0a0a0f; --bg2:#0f0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07);
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+    --text:#f0f0ff; --text2:rgba(240,240,255,0.6); --text3:rgba(240,240,255,0.35);
+    --green:#10b981; --cyan:#06b6d4; --red:#ef4444; --gold:#f59e0b; --purple:#7c3aed;
+    --grad-dev:linear-gradient(135deg,#10b981,#06b6d4);
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:40px 24px 80px; }
+body::before { content:''; position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 600px 400px at 50% 0%, rgba(16,185,129,0.07) 0%, transparent 70%); pointer-events:none; }
+
+.dev-header { width:100%; max-width:720px; display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; position:relative; z-index:1; }
+.dev-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.dev-logo-icon { font-size:1.4em; filter:drop-shadow(0 0 8px rgba(16,185,129,0.6)); }
+.dev-logo-name { font-weight:900; font-size:1em; background:var(--grad-dev); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:1px; }
+.dev-logo-badge { background:var(--grad-dev); color:#fff; font-size:0.55em; font-weight:900; padding:2px 7px; border-radius:5px; }
+.back-btn { padding:8px 18px; border-radius:99px; background:var(--surface); border:1px solid var(--border2); color:var(--text2); font-size:0.85em; font-weight:700; text-decoration:none; transition:all 0.2s; }
+.back-btn:hover { color:var(--text); border-color:rgba(16,185,129,0.4); }
+
+.dev-title { font-size:2em; font-weight:900; margin-bottom:6px; background:var(--grad-dev); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; position:relative; z-index:1; }
+.dev-sub { color:var(--text3); font-size:0.88em; margin-bottom:40px; position:relative; z-index:1; }
+
+.dev-grid { width:100%; max-width:720px; display:flex; flex-direction:column; gap:20px; position:relative; z-index:1; }
+.dev-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px 32px; transition:border-color 0.2s; }
+.dev-card:hover { border-color:var(--border2); }
+.dev-card-title { font-size:0.72em; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); margin-bottom:20px; }
+.dev-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.dev-row-info h3 { font-size:1em; font-weight:800; margin-bottom:4px; }
+.dev-row-info p { font-size:0.85em; color:var(--text2); line-height:1.5; }
+
+/* Toggle */
+.toggle-wrap { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.toggle { position:relative; width:52px; height:28px; cursor:pointer; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-track { position:absolute; inset:0; border-radius:99px; background:rgba(239,68,68,0.3); border:1px solid rgba(239,68,68,0.4); transition:all 0.3s; }
+.toggle input:checked + .toggle-track { background:rgba(16,185,129,0.3); border-color:rgba(16,185,129,0.5); }
+.toggle-thumb { position:absolute; top:4px; left:4px; width:20px; height:20px; border-radius:50%; background:var(--red); transition:all 0.3s; box-shadow:0 2px 8px rgba(0,0,0,0.4); }
+.toggle input:checked ~ .toggle-thumb { transform:translateX(24px); background:var(--green); box-shadow:0 2px 12px rgba(16,185,129,0.5); }
+
+/* Status */
+.status-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; transition:all 0.3s; }
+.status-dot.online  { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,0.6); }
+.status-dot.offline { background:var(--red); box-shadow:0 0 8px rgba(239,68,68,0.6); animation:blink 1s ease-in-out infinite; }
+.status-dot.maintenance { background:var(--gold); box-shadow:0 0 8px rgba(245,158,11,0.6); animation:blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-text { font-size:0.85em; font-weight:700; }
+.status-text.online { color:var(--green); }
+.status-text.offline { color:var(--red); }
+.status-text.maintenance { color:var(--gold); }
+
+/* Role form */
+.role-form { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.role-input { flex:1; min-width:200px; padding:10px 14px; background:var(--surface2); border:1px solid var(--border2); border-radius:10px; color:var(--text); font-size:0.88em; font-family:inherit; outline:none; transition:all 0.2s; }
+.role-input:focus { border-color:rgba(16,185,129,0.5); box-shadow:0 0 0 3px rgba(16,185,129,0.1); }
+.role-input::placeholder { color:var(--text3); }
+.role-select { padding:10px 14px; background:var(--surface2); border:1px solid var(--border2); border-radius:10px; color:var(--text); font-size:0.88em; font-family:inherit; outline:none; cursor:pointer; }
+.role-select option { background:#1a1a2e; }
+.btn { padding:10px 20px; border-radius:10px; font-size:0.88em; font-weight:800; cursor:pointer; font-family:inherit; border:none; transition:all 0.2s; }
+.btn-dev { background:var(--grad-dev); color:#fff; box-shadow:0 3px 12px rgba(16,185,129,0.3); }
+.btn-dev:hover { transform:translateY(-1px); box-shadow:0 5px 20px rgba(16,185,129,0.45); }
+.btn-red { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+.btn-red:hover { background:rgba(239,68,68,0.25); }
+
+/* Role badges */
+.role-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:0.72em; font-weight:900; letter-spacing:0.5px; margin-left:6px; }
+.rb-dev     { background:rgba(16,185,129,0.2); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+.rb-admin   { background:rgba(239,68,68,0.2); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+.rb-creator { background:rgba(245,158,11,0.2); color:var(--gold); border:1px solid rgba(245,158,11,0.3); }
+
+/* Result */
+.role-result { margin-top:12px; padding:12px 16px; border-radius:10px; font-size:0.85em; font-weight:600; display:none; }
+.role-result.ok  { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); color:var(--green); }
+.role-result.err { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:var(--red); }
+
+/* Modal */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+.modal-bg.open { display:flex; }
+.modal { background:var(--bg2); border:1px solid var(--border2); border-radius:20px; padding:36px; width:100%; max-width:420px; box-shadow:0 32px 80px rgba(0,0,0,0.7); animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1); text-align:center; }
+@keyframes pop { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+.modal-icon { font-size:3em; margin-bottom:16px; }
+.modal h3 { font-size:1.2em; font-weight:900; margin-bottom:8px; }
+.modal p { font-size:0.88em; color:var(--text2); line-height:1.6; margin-bottom:28px; }
+.modal-actions { display:flex; gap:12px; justify-content:center; }
+.btn-cancel { background:var(--surface2); color:var(--text2); border:1px solid var(--border2); padding:11px 24px; border-radius:99px; font-size:0.9em; font-weight:800; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-cancel:hover { color:var(--text); }
+.btn-confirm { padding:11px 24px; border-radius:99px; font-size:0.9em; font-weight:800; cursor:pointer; font-family:inherit; border:none; transition:all 0.2s; }
+    </style>
+</head>
+<body>
+
+<div class="dev-header">
+    <a href="profile.html" class="back-btn">← Back</a>
+    <a href="profile.html" class="dev-logo">
+        <span class="dev-logo-icon">⚡</span>
+        <span class="dev-logo-name">DEV PANEL</span>
+        <span class="dev-logo-badge">NOMCHAT</span>
+    </a>
+</div>
+
+<h1 class="dev-title">Developer Panel</h1>
+<p class="dev-sub">Only accessible to nomchat@nom.ru</p>
+
+<div class="dev-grid">
+
+    <!-- Site status -->
+    <div class="dev-card">
+        <div class="dev-card-title">Site Control</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <div class="status-dot online" id="status-dot"></div>
+            <span class="status-text online" id="status-text">ONLINE</span>
+        </div>
+
+        <div class="dev-row" style="margin-bottom:16px">
+            <div class="dev-row-info">
+                <h3>Disable site</h3>
+                <p>All visitors see error <strong style="color:#f59e0b">35092 GTT-48293</strong>. Nobody can access any page.</p>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="site-toggle" checked onchange="confirmToggle('site', this)">
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>
+        </div>
+
+        <div class="dev-row">
+            <div class="dev-row-info">
+                <h3>Maintenance mode</h3>
+                <p>Users see maintenance page. Admins, devs and creators can still access the site.</p>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="maintenance-toggle" onchange="confirmToggle('maintenance', this)">
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>
+        </div>
+    </div>
+
+    <!-- Role management -->
+    <div class="dev-card">
+        <div class="dev-card-title">Role Management</div>
+        <p style="font-size:0.88em;color:var(--text2);margin-bottom:16px">Assign or remove roles from any user by email.</p>
+        <div class="role-form">
+            <input class="role-input" id="role-email" placeholder="user@example.com" type="email">
+            <select class="role-select" id="role-select">
+                <option value="dev">DEV</option>
+                <option value="admin">ADM</option>
+                <option value="creator">CREATOR</option>
+                <option value="support">SUPPORT</option>
+            </select>
+            <button class="btn btn-dev" onclick="grantRole()">Grant</button>
+            <button class="btn btn-red" onclick="revokeRole()">Revoke</button>
+        </div>
+        <div class="role-result" id="role-result"></div>
+    </div>
+
+    <!-- Error info -->
+    <div class="dev-card">
+        <div class="dev-card-title">Error Codes</div>
+        <div style="font-family:'Courier New',monospace;font-size:0.85em;line-height:2;color:var(--text2)">
+            <div>Offline code: <span style="color:#f59e0b">35092</span></div>
+            <div>Register: <span style="color:#ef4444">FOUND — DISABLED</span></div>
+            <div>Error: <span style="color:#f59e0b">48293 GTT</span></div>
+            <div>Maintenance: <span style="color:#f59e0b">SCHEDULED</span></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-bg" id="confirm-modal">
+    <div class="modal">
+        <div class="modal-icon" id="modal-icon">⚠️</div>
+        <h3 id="modal-title">Confirm</h3>
+        <p id="modal-desc">Are you sure?</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="cancelToggle()">Cancel</button>
+            <button class="btn-confirm" id="modal-confirm-btn" onclick="doToggle()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '';
+let pendingAction = null;
+
+async function init() {
+    const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+    if (!res.ok) { window.location.href = 'login.html'; return; }
+    const user = await res.json();
+    if (user.email !== 'nomchat@nom.ru' && !user.is_dev) { window.location.href = 'index.html'; return; }
+    await loadStatus();
+}
+
+async function loadStatus() {
+    const sr = await fetch(`${API}/api/dev/status`, { credentials: 'include' });
+    const s  = await sr.json();
+    applyStatus(s);
+}
+
+function applyStatus(s) {
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    document.getElementById('site-toggle').checked        = !s.disabled;
+    document.getElementById('maintenance-toggle').checked = s.maintenance;
+
+    if (s.disabled) {
+        dot.className = 'status-dot offline'; txt.className = 'status-text offline'; txt.textContent = 'OFFLINE';
+    } else if (s.maintenance) {
+        dot.className = 'status-dot maintenance'; txt.className = 'status-text maintenance'; txt.textContent = 'MAINTENANCE';
+    } else {
+        dot.className = 'status-dot online'; txt.className = 'status-text online'; txt.textContent = 'ONLINE';
+    }
+}
+
+function confirmToggle(type, checkbox) {
+    const isEnabling = checkbox.checked;
+    checkbox.checked = !isEnabling; // revert until confirmed
+    pendingAction = { type, enable: isEnabling };
+
+    const configs = {
+        site: {
+            enable:  { icon:'✅', title:'Enable site?',        desc:'The site will become accessible to all users.',                  color:'linear-gradient(135deg,#10b981,#06b6d4)', label:'Enable' },
+            disable: { icon:'🔴', title:'Disable site?',       desc:'All users will see error 35092 GTT-48293.',                      color:'linear-gradient(135deg,#ef4444,#dc2626)', label:'Disable' }
+        },
+        maintenance: {
+            enable:  { icon:'⚙️', title:'Enable maintenance?', desc:'Users will see maintenance page. Staff can still access.',       color:'linear-gradient(135deg,#f59e0b,#ef4444)', label:'Enable' },
+            disable: { icon:'✅', title:'Disable maintenance?', desc:'The site will return to normal for all users.',                  color:'linear-gradient(135deg,#10b981,#06b6d4)', label:'Disable' }
+        }
+    };
+    const cfg = configs[type][isEnabling ? 'enable' : 'disable'];
+    document.getElementById('modal-icon').textContent          = cfg.icon;
+    document.getElementById('modal-title').textContent         = cfg.title;
+    document.getElementById('modal-desc').textContent          = cfg.desc;
+    document.getElementById('modal-confirm-btn').textContent   = cfg.label;
+    document.getElementById('modal-confirm-btn').style.background = cfg.color;
+    document.getElementById('modal-confirm-btn').style.color   = '#fff';
+    document.getElementById('modal-confirm-btn').style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)';
+    document.getElementById('confirm-modal').classList.add('open');
+}
+
+async function doToggle() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    const endpoint = pendingAction.type === 'site' ? '/api/dev/toggle-site' : '/api/dev/toggle-maintenance';
+    const res = await fetch(`${API}${endpoint}`, { method: 'POST', credentials: 'include' });
+    const s   = await res.json();
+    applyStatus(s);
+    pendingAction = null;
+}
+
+function cancelToggle() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    pendingAction = null;
+}
+
+async function grantRole()  { await setRole(true); }
+async function revokeRole() { await setRole(false); }
+
+async function setRole(grant) {
+    const email = document.getElementById('role-email').value.trim();
+    const role  = document.getElementById('role-select').value;
+    const res   = document.getElementById('role-result');
+    if (!email) { showResult('Enter an email address', false); return; }
+
+    const r = await fetch(`${API}/api/dev/set-role`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role, value: grant })
+    });
+    const data = await r.json();
+    if (r.ok) {
+        showResult(`✓ ${data.username} (${data.email}) — ${role.toUpperCase()} ${grant ? 'granted' : 'revoked'}`, true);
+    } else {
+        showResult('✕ ' + (data.error || 'Error'), false);
+    }
+}
+
+function showResult(msg, ok) {
+    const el = document.getElementById('role-result');
+    el.textContent = msg;
+    el.className = 'role-result ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+document.getElementById('confirm-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) cancelToggle();
+});
+
+init();
+</script>
+</body>
+</html>

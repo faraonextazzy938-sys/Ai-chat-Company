@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomchat ID — Apps</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .lang-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.82em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        .lang-btn:hover { background: rgba(255,255,255,0.25); }
+    </style>
+</head>
+<body>
+
+<header class="nc-header">
+    <div class="nc-header-inner">
+        <a href="index.html" class="nc-logo">
+            <span class="nc-logo-icon">💬</span>
+            <span class="nc-logo-name">NOMCHAT</span>
+            <span class="nc-logo-badge">ID</span>
+        </a>
+        <nav class="nc-nav">
+            <a href="index.html" class="nc-nav-link" data-i18n="nav.home">Home</a>
+            <a href="games.html" class="nc-nav-link active" data-i18n="nav.apps">Apps</a>
+            <a href="connect.html" class="nc-nav-link" data-i18n="nav.connect">Connect</a>
+            <a href="profile.html" class="nc-nav-link" id="nav-profile" style="display:none" data-i18n="nav.profile">Profile</a>
+        </nav>
+        <div style="display:flex;align-items:center">
+            <div id="header-user-area">
+                <a href="login.html" class="nc-header-btn" data-i18n="nav.signin">Sign in</a>
+            </div>
+            <button class="lang-btn" id="langToggleBtn" onclick="toggleLang()">🇷🇺 RU</button>
+        </div>
+    </div>
+</header>
+
+<section class="nc-hero" style="padding:60px 24px 80px">
+    <div class="nc-hero-inner">
+        <h1 class="nc-hero-title" style="font-size:2.6em" data-i18n="apps.label">Apps</h1>
+        <p class="nc-hero-sub" data-i18n="hero.sub">Sign in once with your email. No passwords. Your identity — always with you across every app.</p>
+    </div>
+</section>
+
+<section class="nc-section">
+    <div class="nc-section-inner">
+        <div class="nc-section-label" data-i18n="apps.allapps">All apps</div>
+        <h2 class="nc-section-title" data-i18n="apps.title">Open now</h2>
+        <div class="nc-games-grid">
+            <a href="http://localhost:3000" target="_blank" class="nc-game-card">
+                <div class="nc-game-banner" style="background:linear-gradient(135deg,#1a1a2e,#667eea,#764ba2)">
+                    <svg width="72" height="72" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="nc-game-body">
+                    <div class="nc-game-name">AI Chat Pro</div>
+                    <div class="nc-game-dev" data-i18n="aichat.dev">by AI Chat Company</div>
+                    <div class="nc-game-desc" data-i18n="aichat.desc">Умный AI-ассистент на базе Llama 3.3 70B. Чат, музыка, код — всё в одном приложении.</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+                        <span style="background:#ede7f6;color:#6a1b9a;font-size:0.78em;font-weight:600;padding:4px 10px;border-radius:99px">AI</span>
+                        <span style="background:#ede7f6;color:#6a1b9a;font-size:0.78em;font-weight:600;padding:4px 10px;border-radius:99px">Chat</span>
+                        <span style="background:#e8f5e9;color:#2e7d32;font-size:0.78em;font-weight:600;padding:4px 10px;border-radius:99px">Free</span>
+                    </div>
+                    <div class="nc-game-footer">
+                        <div class="nc-game-badge"><span class="nc-game-badge-icon">💬</span> Nomchat ID</div>
+                        <span class="nc-game-btn" data-i18n="btn.open">Open</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="nc-section nc-section-gray">
+    <div class="nc-section-inner" style="text-align:center">
+        <div class="nc-section-label">Developers</div>
+        <h2 class="nc-section-title">Add your app</h2>
+        <p style="color:#555;font-size:1.05em;max-width:500px;margin:0 auto 32px;line-height:1.7">Want to integrate Nomchat ID into your app? Contact us and we'll help you get started.</p>
+        <a href="mailto:dev@nomchat.id" class="nc-btn-primary" style="display:inline-block">Contact us</a>
+    </div>
+</section>
+
+<footer class="nc-footer">
+    <div class="nc-footer-inner">
+        <div>
+            <a href="index.html" class="nc-footer-logo">
+                <span class="nc-logo-icon">💬</span>
+                <span class="nc-logo-name">NOMCHAT</span>
+                <span class="nc-logo-badge">ID</span>
+            </a>
+            <p class="nc-footer-tagline" data-i18n="footer.tagline">The identity platform.</p>
+        </div>
+        <div class="nc-footer-links">
+            <a href="https://nomchat-id.up.railway.app/docs/privacy.html" target="_blank" data-i18n="footer.privacy">Privacy Policy</a>
+            <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank" data-i18n="footer.terms">Terms of Service</a>
+            <a href="https://nomchat-id.up.railway.app/docs/report.html" target="_blank" data-i18n="footer.support">Support</a>
+            <a href="connect.html" data-i18n="nav.connect">Connect</a>
+        </div>
+    </div>
+    <div class="nc-footer-bottom">© 2026 Nomchat ID. All rights reserved.</div>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script src="cookies.js"></script><script src="ai-widget.js"></script></body>
+</html>

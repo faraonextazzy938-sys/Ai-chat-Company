@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Panel — Nomchat ID</title>
+    <style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --bg:#0a0a0f; --bg2:#0f0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07);
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+    --text:#f0f0ff; --text2:rgba(240,240,255,0.6); --text3:rgba(240,240,255,0.35);
+    --accent:#5b6ef5; --green:#10b981; --red:#ef4444; --gold:#f59e0b; --cyan:#06b6d4;
+    --grad-sup:linear-gradient(135deg,#06b6d4,#5b6ef5);
+    --sb:220px;
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+/* Sidebar */
+.sb { width:var(--sb); flex-shrink:0; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:50; }
+.sb-logo { padding:24px 20px; border-bottom:1px solid var(--border); }
+.sb-logo-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.sb-logo-icon { font-size:1.4em; filter:drop-shadow(0 0 8px rgba(6,182,212,0.6)); }
+.sb-logo-name { font-weight:900; font-size:1em; background:var(--grad-sup); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:1px; }
+.sb-logo-badge { background:var(--grad-sup); color:#fff; font-size:0.55em; font-weight:900; padding:2px 7px; border-radius:5px; }
+.sb-sub { font-size:0.72em; color:var(--text3); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.sb-nav { flex:1; padding:12px 10px; display:flex; flex-direction:column; gap:2px; }
+.sb-item { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:12px; color:var(--text2); cursor:pointer; transition:all 0.2s; font-size:0.88em; font-weight:600; }
+.sb-item:hover { background:var(--surface2); color:var(--text); }
+.sb-item.active { background:rgba(6,182,212,0.12); color:var(--text); border:1px solid rgba(6,182,212,0.2); }
+.sb-icon { font-size:1.1em; width:20px; text-align:center; }
+.sb-badge { background:var(--red); color:#fff; font-size:0.65em; font-weight:900; padding:2px 7px; border-radius:99px; margin-left:auto; }
+.sb-foot { padding:16px; border-top:1px solid var(--border); }
+.sb-user { font-size:0.75em; color:var(--text3); margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-logout { width:100%; padding:9px; background:transparent; border:1px solid var(--border2); border-radius:10px; color:var(--text2); font-size:0.82em; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.sb-logout:hover { border-color:var(--red); color:var(--red); }
+
+/* Main */
+.main { margin-left:var(--sb); flex:1; padding:32px; min-height:100vh; }
+.page { display:none; animation:fadeIn 0.3s ease; }
+.page.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.page-title { font-size:1.6em; font-weight:900; margin-bottom:4px; }
+.page-sub { color:var(--text3); font-size:0.88em; margin-bottom:28px; }
+
+/* Stats */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; margin-bottom:32px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px; position:relative; overflow:hidden; transition:all 0.2s; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--grad-sup); opacity:0; transition:opacity 0.3s; }
+.stat-card:hover { border-color:var(--border2); transform:translateY(-2px); }
+.stat-card:hover::before { opacity:1; }
+.stat-icon { font-size:1.5em; margin-bottom:10px; }
+.stat-lbl { font-size:0.75em; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.stat-val { font-size:2em; font-weight:900; background:var(--grad-sup); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+/* Filters */
+.filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.filter-btn { padding:7px 16px; border-radius:99px; background:var(--surface); border:1px solid var(--border2); color:var(--text2); font-size:0.82em; font-weight:700; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.filter-btn:hover { color:var(--text); border-color:rgba(6,182,212,0.4); }
+.filter-btn.active { background:rgba(6,182,212,0.15); border-color:rgba(6,182,212,0.4); color:var(--text); }
+
+/* Reports list */
+.reports-list { display:flex; flex-direction:column; gap:12px; }
+.report-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px 24px; cursor:pointer; transition:all 0.2s; }
+.report-card:hover { border-color:var(--border2); background:var(--surface2); transform:translateX(4px); }
+.report-card.open     { border-left:3px solid var(--red); }
+.report-card.in_progress { border-left:3px solid var(--gold); }
+.report-card.resolved { border-left:3px solid var(--green); }
+.report-card.closed   { border-left:3px solid var(--text3); }
+.report-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap; }
+.report-id { font-size:0.75em; color:var(--text3); font-weight:700; }
+.report-subject { font-weight:800; font-size:0.95em; flex:1; }
+.report-meta { font-size:0.78em; color:var(--text3); }
+.report-preview { font-size:0.85em; color:var(--text2); line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+/* Status badges */
+.status-badge { padding:3px 10px; border-radius:99px; font-size:0.72em; font-weight:800; letter-spacing:0.5px; flex-shrink:0; }
+.sb-open        { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+.sb-in_progress { background:rgba(245,158,11,0.15); color:var(--gold); border:1px solid rgba(245,158,11,0.2); }
+.sb-resolved    { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.2); }
+.sb-closed      { background:var(--surface2); color:var(--text3); border:1px solid var(--border); }
+
+/* Category badges */
+.cat-badge { padding:3px 10px; border-radius:99px; font-size:0.72em; font-weight:700; }
+.cat-bug        { background:rgba(239,68,68,0.1); color:var(--red); }
+.cat-abuse      { background:rgba(245,158,11,0.1); color:var(--gold); }
+.cat-ban_appeal { background:rgba(91,110,245,0.1); color:var(--accent); }
+.cat-general    { background:var(--surface2); color:var(--text3); }
+
+/* Detail view */
+.detail-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; }
+.detail-back { display:inline-flex; align-items:center; gap:6px; color:var(--text2); font-size:0.85em; font-weight:700; cursor:pointer; margin-bottom:24px; transition:color 0.2s; background:none; border:none; font-family:inherit; }
+.detail-back:hover { color:var(--text); }
+.detail-title { font-size:1.3em; font-weight:900; margin-bottom:16px; }
+.detail-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.detail-message { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; font-size:0.9em; color:var(--text2); line-height:1.7; margin-bottom:24px; white-space:pre-wrap; }
+.respond-area { display:flex; flex-direction:column; gap:12px; }
+.respond-label { font-size:0.75em; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:1px; }
+.respond-textarea { width:100%; padding:14px 16px; background:var(--surface2); border:1px solid var(--border2); border-radius:12px; color:var(--text); font-size:0.9em; font-family:inherit; outline:none; resize:vertical; min-height:120px; line-height:1.6; transition:all 0.2s; }
+.respond-textarea:focus { border-color:rgba(6,182,212,0.5); box-shadow:0 0 0 3px rgba(6,182,212,0.1); }
+.respond-textarea::placeholder { color:var(--text3); }
+.respond-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.btn { padding:10px 20px; border-radius:10px; font-size:0.85em; font-weight:800; cursor:pointer; font-family:inherit; border:none; transition:all 0.2s; }
+.btn-sup { background:var(--grad-sup); color:#fff; box-shadow:0 3px 12px rgba(6,182,212,0.3); }
+.btn-sup:hover { transform:translateY(-1px); box-shadow:0 5px 20px rgba(6,182,212,0.45); }
+.btn-ghost { background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
+.btn-ghost:hover { color:var(--text); }
+.btn-close { background:rgba(239,68,68,0.1); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+.btn-close:hover { background:rgba(239,68,68,0.2); }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; right:24px; padding:14px 20px; border-radius:12px; font-size:0.88em; font-weight:700; z-index:999; animation:toastIn 0.3s ease; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+.toast-ok  { background:var(--green); color:#fff; }
+.toast-err { background:var(--red); color:#fff; }
+@keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.empty { text-align:center; padding:48px; color:var(--text3); }
+.empty-icon { font-size:2.5em; margin-bottom:12px; }
+    </style>
+</head>
+<body>
+
+<aside class="sb">
+    <div class="sb-logo">
+        <div class="sb-logo-row">
+            <span class="sb-logo-icon">🎧</span>
+            <span class="sb-logo-name">SUPPORT</span>
+            <span class="sb-logo-badge">NOMCHAT</span>
+        </div>
+        <div class="sb-sub">Support Panel</div>
+    </div>
+    <nav class="sb-nav">
+        <div class="sb-item active" onclick="showPage('dashboard',this)"><span class="sb-icon">📊</span>Dashboard</div>
+        <div class="sb-item" onclick="showPage('reports',this)"><span class="sb-icon">📋</span>Reports <span class="sb-badge" id="open-count">0</span></div>
+    </nav>
+    <div class="sb-foot">
+        <div class="sb-user" id="support-email">—</div>
+        <button class="sb-logout" onclick="window.location.href='profile.html'">← Back to profile</button>
+    </div>
+</aside>
+
+<main class="main">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+        <div class="page-title">Support Dashboard</div>
+        <div class="page-sub">Overview of user reports</div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-lbl">Total</div><div class="stat-val" id="s-total">—</div></div>
+            <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-lbl">Open</div><div class="stat-val" id="s-open">—</div></div>
+            <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-lbl">In progress</div><div class="stat-val" id="s-progress">—</div></div>
+            <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-lbl">Resolved</div><div class="stat-val" id="s-resolved">—</div></div>
+        </div>
+    </div>
+
+    <!-- Reports -->
+    <div class="page" id="page-reports">
+        <div class="page-title">Reports</div>
+        <div class="page-sub">Review and respond to user reports</div>
+
+        <!-- List view -->
+        <div id="reports-list-view">
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterReports('',this)">All</button>
+                <button class="filter-btn" onclick="filterReports('open',this)">🔴 Open</button>
+                <button class="filter-btn" onclick="filterReports('in_progress',this)">🟡 In progress</button>
+                <button class="filter-btn" onclick="filterReports('resolved',this)">✅ Resolved</button>
+                <button class="filter-btn" onclick="filterReports('closed',this)">⬛ Closed</button>
+            </div>
+            <div class="reports-list" id="reports-list"></div>
+        </div>
+
+        <!-- Detail view -->
+        <div id="reports-detail-view" style="display:none">
+            <button class="detail-back" onclick="showList()">← Back to reports</button>
+            <div class="detail-card" id="detail-content"></div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+const API = '';
+let allReports = [];
+let currentFilter = '';
+
+async function init() {
+    const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+    if (!res.ok) { window.location.href = 'login.html'; return; }
+    const user = await res.json();
+    if (!user.is_support && !user.is_admin && !user.is_dev) { window.location.href = 'index.html'; return; }
+    document.getElementById('support-email').textContent = user.email;
+    loadDashboard();
+}
+
+function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sb-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    el.classList.add('active');
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'reports')   loadReports();
+}
+
+async function loadDashboard() {
+    const res  = await fetch(`${API}/api/support/stats`, { credentials: 'include' });
+    const data = await res.json();
+    animNum('s-total',    data.total);
+    animNum('s-open',     data.open);
+    animNum('s-progress', data.in_progress);
+    animNum('s-resolved', data.resolved);
+    document.getElementById('open-count').textContent = data.open;
+}
+
+function animNum(id, target) {
+    const el = document.getElementById(id);
+    let n = 0, step = Math.max(1, Math.ceil(target / 20));
+    const t = setInterval(() => { n = Math.min(n + step, target); el.textContent = n; if (n >= target) clearInterval(t); }, 40);
+}
+
+async function loadReports(status = currentFilter) {
+    currentFilter = status;
+    const url = status ? `${API}/api/reports?status=${status}` : `${API}/api/reports`;
+    const res  = await fetch(url, { credentials: 'include' });
+    allReports  = await res.json();
+    renderReports(allReports);
+}
+
+function renderReports(reports) {
+    const list = document.getElementById('reports-list');
+    if (!reports.length) {
+        list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No reports found</div>';
+        return;
+    }
+    list.innerHTML = reports.map(r => `
+        <div class="report-card ${r.status}" onclick="openReport(${r.id})">
+            <div class="report-header">
+                <span class="report-id">#${r.id}</span>
+                <span class="report-subject">${esc(r.subject)}</span>
+                <span class="cat-badge cat-${r.category}">${catLabel(r.category)}</span>
+                <span class="status-badge sb-${r.status}">${statusLabel(r.status)}</span>
+            </div>
+            <div class="report-meta">${esc(r.reporter_email)} · ${fmt(r.created_at)}</div>
+            <div class="report-preview" style="margin-top:8px">${esc(r.message)}</div>
+        </div>`).join('');
+}
+
+function filterReports(status, el) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    loadReports(status);
+}
+
+async function openReport(id) {
+    const res = await fetch(`${API}/api/reports/${id}`, { credentials: 'include' });
+    const r   = await res.json();
+    document.getElementById('reports-list-view').style.display = 'none';
+    document.getElementById('reports-detail-view').style.display = 'block';
+
+    document.getElementById('detail-content').innerHTML = `
+        <div class="detail-info">
+            <span class="report-id">#${r.id}</span>
+            <span class="cat-badge cat-${r.category}">${catLabel(r.category)}</span>
+            <span class="status-badge sb-${r.status}">${statusLabel(r.status)}</span>
+        </div>
+        <div class="detail-title">${esc(r.subject)}</div>
+        <div style="font-size:0.82em;color:var(--text3);margin-bottom:20px">
+            From: <strong style="color:var(--text2)">${esc(r.reporter_email)}</strong> · ${fmt(r.created_at)}
+            ${r.resolved_by ? ` · Handled by: <strong style="color:var(--text2)">${esc(r.resolved_by)}</strong>` : ''}
+        </div>
+        <div class="respond-label" style="margin-bottom:8px">Message</div>
+        <div class="detail-message">${esc(r.message)}</div>
+
+        ${r.response ? `
+        <div class="respond-label" style="margin-bottom:8px">Previous response</div>
+        <div class="detail-message" style="border-color:rgba(16,185,129,0.2);background:rgba(16,185,129,0.05)">${esc(r.response)}</div>
+        ` : ''}
+
+        <div class="respond-area">
+            <div class="respond-label">Response</div>
+            <textarea class="respond-textarea" id="response-text" placeholder="Write your response to the user...">${r.response || ''}</textarea>
+            <div class="respond-actions">
+                <button class="btn btn-sup" onclick="respond(${r.id},'resolved')">✓ Resolve</button>
+                <button class="btn btn-ghost" onclick="respond(${r.id},'in_progress')">🔄 Mark in progress</button>
+                <button class="btn btn-close" onclick="respond(${r.id},'closed')">✕ Close</button>
+            </div>
+        </div>
+    `;
+}
+
+async function respond(id, status) {
+    const response = document.getElementById('response-text').value.trim();
+    const res = await fetch(`${API}/api/reports/${id}/respond`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response, status })
+    });
+    if (res.ok) {
+        toast('Report updated', 'ok');
+        showList();
+        loadDashboard();
+    } else toast('Error', 'err');
+}
+
+function showList() {
+    document.getElementById('reports-list-view').style.display = 'block';
+    document.getElementById('reports-detail-view').style.display = 'none';
+    loadReports();
+}
+
+function catLabel(c) {
+    return { general:'💬 General', bug:'🐛 Bug', abuse:'🚨 Abuse', ban_appeal:'🔨 Ban appeal' }[c] || c;
+}
+function statusLabel(s) {
+    return { open:'Open', in_progress:'In progress', resolved:'Resolved', closed:'Closed' }[s] || s;
+}
+function fmt(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { day:'2-digit', month:'short', year:'numeric' });
+}
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.textContent = (type === 'ok' ? '✓ ' : '✕ ') + msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 2500);
+}
+
+init();
+</script>
+</body>
+</html>

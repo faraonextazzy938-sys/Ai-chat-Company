@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report — Nomchat ID</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .report-wrap { max-width: 600px; margin: 0 auto; padding: 100px 24px 80px; position: relative; z-index: 1; }
+        .report-badge { display:inline-block; padding:5px 14px; border-radius:99px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; font-size:0.78em; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:20px; }
+        .report-title { font-size:2.4em; font-weight:900; letter-spacing:-1px; margin-bottom:8px; }
+        .report-sub { color:var(--text3); font-size:0.9em; margin-bottom:40px; line-height:1.6; }
+        .form-card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; }
+        .form-group { margin-bottom:20px; }
+        .form-label { display:block; font-size:0.75em; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+        .form-input, .form-select, .form-textarea {
+            width:100%; padding:12px 16px;
+            background:var(--surface2); border:1px solid var(--border2);
+            border-radius:12px; color:var(--text); font-size:0.92em;
+            font-family:inherit; outline:none; transition:all 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color:rgba(91,110,245,0.5); box-shadow:0 0 0 3px rgba(91,110,245,0.1);
+        }
+        .form-input::placeholder, .form-textarea::placeholder { color:var(--text3); }
+        .form-select option { background:#1a1a2e; }
+        .form-textarea { resize:vertical; min-height:140px; line-height:1.6; }
+        .char-count { font-size:0.75em; color:var(--text3); text-align:right; margin-top:4px; }
+        .submit-btn {
+            width:100%; padding:14px; border-radius:99px;
+            background:var(--grad); border:none; color:#fff;
+            font-size:1em; font-weight:800; cursor:pointer;
+            font-family:inherit; transition:all 0.3s;
+            box-shadow:0 6px 24px rgba(91,110,245,0.35);
+        }
+        .submit-btn:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(91,110,245,0.5); }
+        .submit-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .success-card { text-align:center; padding:40px 20px; display:none; }
+        .success-icon { font-size:3.5em; margin-bottom:16px; }
+        .success-title { font-size:1.4em; font-weight:900; margin-bottom:8px; }
+        .success-sub { color:var(--text2); font-size:0.9em; line-height:1.6; }
+        .category-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:4px; }
+        .cat-btn {
+            padding:12px; border-radius:12px;
+            background:var(--surface2); border:1px solid var(--border2);
+            color:var(--text2); font-size:0.85em; font-weight:700;
+            cursor:pointer; transition:all 0.2s; text-align:center;
+            font-family:inherit;
+        }
+        .cat-btn:hover { border-color:rgba(91,110,245,0.4); color:var(--text); }
+        .cat-btn.selected { background:rgba(91,110,245,0.15); border-color:rgba(91,110,245,0.5); color:var(--text); }
+    </style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<header class="nc-header">
+    <div class="nc-header-inner">
+        <a href="index.html" class="nc-logo">
+            <span class="nc-logo-icon">💬</span>
+            <span class="nc-logo-name">NOMCHAT</span>
+            <span class="nc-logo-badge">ID</span>
+        </a>
+        <div style="margin-left:auto;display:flex;gap:8px">
+            <a href="profile.html" class="nc-header-btn">← Profile</a>
+        </div>
+    </div>
+</header>
+
+<div class="report-wrap">
+    <div class="report-badge">Support</div>
+    <h1 class="report-title">Submit a Report</h1>
+    <p class="report-sub">Report a bug, abuse, or appeal a ban. Our support team will review your request.</p>
+
+    <div class="form-card">
+        <!-- Form -->
+        <div id="report-form">
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <div class="category-grid">
+                    <button class="cat-btn selected" data-cat="general" onclick="selectCat('general',this)">💬 General</button>
+                    <button class="cat-btn" data-cat="bug" onclick="selectCat('bug',this)">🐛 Bug report</button>
+                    <button class="cat-btn" data-cat="abuse" onclick="selectCat('abuse',this)">🚨 Abuse / Harassment</button>
+                    <button class="cat-btn" data-cat="ban_appeal" onclick="selectCat('ban_appeal',this)">🔨 Ban appeal</button>
+                </div>
+                <input type="hidden" id="category" value="general">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Subject</label>
+                <input class="form-input" id="subject" placeholder="Brief description of your issue" maxlength="200">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-textarea" id="message" placeholder="Describe your issue in detail..." maxlength="2000" oninput="updateCount()"></textarea>
+                <div class="char-count"><span id="char-count">0</span> / 2000</div>
+            </div>
+
+            <div id="login-note" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:0.85em;color:#f59e0b;">
+                ⚠️ You're not signed in. Your email will be used to track this report.
+                <div style="margin-top:8px"><input class="form-input" id="guest-email" placeholder="your@email.com" style="margin:0"></div>
+            </div>
+
+            <button class="submit-btn" id="submit-btn" onclick="submitReport()">Submit report</button>
+        </div>
+
+        <!-- Success -->
+        <div class="success-card" id="success-card">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Report submitted!</div>
+            <p class="success-sub">Your report has been received. Our support team will review it and respond as soon as possible.<br><br>Report ID: <strong id="report-id">#—</strong></p>
+            <a href="profile.html" style="display:inline-block;margin-top:24px;padding:12px 28px;border-radius:99px;background:var(--grad);color:#fff;font-weight:800;text-decoration:none;font-size:0.9em;">Back to profile</a>
+        </div>
+    </div>
+</div>
+
+<footer class="nc-footer">
+    <div class="nc-footer-inner">
+        <div>
+            <a href="index.html" class="nc-footer-logo">
+                <span class="nc-logo-icon">💬</span>
+                <span class="nc-logo-name">NOMCHAT</span>
+                <span class="nc-logo-badge">ID</span>
+            </a>
+        </div>
+        <div class="nc-footer-links">
+            <a href="https://nomchat-id.up.railway.app/docs/privacy.html" target="_blank">Privacy Policy</a>
+            <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank">Terms of Service</a>
+        </div>
+    </div>
+    <div class="nc-footer-bottom">© 2026 Nomchat ID. All rights reserved.</div>
+</footer>
+
+<script>
+const API = '';
+let currentUser = null;
+
+async function init() {
+    try {
+        const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+        if (res.ok) currentUser = await res.json();
+        else document.getElementById('login-note').style.display = 'block';
+    } catch (_) {
+        document.getElementById('login-note').style.display = 'block';
+    }
+}
+
+function selectCat(cat, el) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('category').value = cat;
+}
+
+function updateCount() {
+    document.getElementById('char-count').textContent = document.getElementById('message').value.length;
+}
+
+async function submitReport() {
+    const subject  = document.getElementById('subject').value.trim();
+    const message  = document.getElementById('message').value.trim();
+    const category = document.getElementById('category').value;
+    const btn      = document.getElementById('submit-btn');
+
+    if (!subject) { document.getElementById('subject').focus(); return; }
+    if (!message) { document.getElementById('message').focus(); return; }
+
+    // If not logged in, need email
+    if (!currentUser) {
+        const email = document.getElementById('guest-email')?.value.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            document.getElementById('guest-email').focus();
+            return;
+        }
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+        const body = { subject, message, category };
+        if (!currentUser) body.guest_email = document.getElementById('guest-email').value.trim();
+
+        const res  = await fetch(`${API}/api/reports`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            document.getElementById('report-form').style.display = 'none';
+            document.getElementById('success-card').style.display = 'block';
+            document.getElementById('report-id').textContent = '#' + data.id;
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Submit report';
+            alert(data.error || 'Error submitting report');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Submit report';
+    }
+}
+
+init();
+</script>
+<script src="cookies.js"></script>
+</body>
+</html>

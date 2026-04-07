@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication API — Nomchat ID Docs</title>
+    <link rel="stylesheet" href="/docs/style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">💬</span>
+            <span class="logo-name">NOMCHAT</span>
+            <span class="logo-badge">DOCS</span>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section">Overview</div>
+            <a href="/docs/index.html" class="nav-link">Introduction</a>
+            <a href="/docs/cookies.html" class="nav-link">Cookie Policy</a>
+            <a href="/docs/privacy.html" class="nav-link">Privacy Policy</a>
+            <a href="/docs/terms.html" class="nav-link">Terms of Service</a>
+            <div class="nav-section">API</div>
+            <a href="/docs/api-auth.html" class="nav-link active">Authentication</a>
+            <a href="/docs/api-users.html" class="nav-link">Users</a>
+            <a href="/docs/api-reports.html" class="nav-link">Reports</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://nomchat-id.up.railway.app" target="_blank" class="back-link">← Back to Nomchat ID</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        <div class="content-inner">
+            <div class="breadcrumb">API → Authentication</div>
+            <h1>Authentication API</h1>
+            <p class="lead">Nomchat ID uses email OTP (one-time password) authentication. No passwords are stored.</p>
+
+            <h2>Flow</h2>
+            <div class="flow-steps">
+                <div class="flow-step"><span class="step-num">1</span><div><strong>Send code</strong><p>POST email → server sends 6-digit code</p></div></div>
+                <div class="flow-step"><span class="step-num">2</span><div><strong>Verify code</strong><p>POST email + code → server creates session</p></div></div>
+                <div class="flow-step"><span class="step-num">3</span><div><strong>Authenticated</strong><p>Session cookie set, use <code>/api/auth/me</code></p></div></div>
+            </div>
+
+            <h2>Endpoints</h2>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/send-code</code>
+                </div>
+                <p>Send a verification code to the user's email.</p>
+                <h4>Request body</h4>
+                <pre><code>{
+  "email": "user@example.com"
+}</code></pre>
+                <h4>Response</h4>
+                <pre><code>{
+  "success": true,
+  "demo_code": null,   // code shown in demo mode (no SMTP)
+  "message": "Code sent"
+}</code></pre>
+                <div class="info-box"><strong>Rate limit:</strong> 5 requests per 5 minutes per IP.</div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/verify</code>
+                </div>
+                <p>Verify the code and create a session.</p>
+                <h4>Request body</h4>
+                <pre><code>{
+  "email": "user@example.com",
+  "code": "123456"
+}</code></pre>
+                <h4>Response (success)</h4>
+                <pre><code>{
+  "success": true,
+  "user": { "id": 1, "email": "...", "username": "...", "avatar": "bolt", "is_admin": false },
+  "is_new_user": false
+}</code></pre>
+                <h4>Response (banned)</h4>
+                <pre><code>HTTP 403
+{
+  "error": "banned",
+  "reason": "Violation of terms",
+  "banned_by": "admin@nomchat.id"
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <code>/api/auth/me</code>
+                </div>
+                <p>Get the currently authenticated user.</p>
+                <h4>Response</h4>
+                <pre><code>{
+  "id": 1,
+  "email": "user@example.com",
+  "username": "player123",
+  "avatar": "bolt",
+  "is_admin": false,
+  "is_dev": false,
+  "is_creator": false,
+  "is_support": false,
+  "is_banned": false,
+  "created_at": "2026-01-01T00:00:00",
+  "last_login": "2026-04-01T12:00:00"
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/logout</code>
+                </div>
+                <p>Sign out and clear the session.</p>
+                <h4>Response</h4>
+                <pre><code>{ "success": true }</code></pre>
+            </div>
+
+            <h2>OAuth for external apps</h2>
+            <p>To integrate Nomchat ID into your app, use the OAuth popup flow:</p>
+            <pre><code>// Open OAuth popup
+const popup = window.open(
+  'https://nomchat-id.up.railway.app/oauth.html?app_id=your-app&app_name=Your+App',
+  'nomchat_auth',
+  'width=480,height=640'
+);
+
+// Listen for token
+window.addEventListener('message', async (event) => {
+  if (event.data.type === 'NOMCHAT_AUTH_SUCCESS') {
+    const { token } = event.data;
+    // Verify token on your server
+    const res = await fetch('https://nomchat-id.up.railway.app/api/auth/token/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, app_id: 'your-app' })
+    });
+    const data = await res.json();
+    // data.user contains the authenticated user
+  }
+});</code></pre>
+        </div>
+    </main>
+</body>
+</html>

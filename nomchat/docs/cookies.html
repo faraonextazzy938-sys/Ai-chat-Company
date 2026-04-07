@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Policy — Nomchat ID Docs</title>
+    <link rel="stylesheet" href="/docs/style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">💬</span>
+            <span class="logo-name">NOMCHAT</span>
+            <span class="logo-badge">DOCS</span>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section">Overview</div>
+            <a href="/docs/index.html" class="nav-link">Introduction</a>
+            <a href="/docs/cookies.html" class="nav-link active">Cookie Policy</a>
+            <a href="/docs/privacy.html" class="nav-link">Privacy Policy</a>
+            <a href="/docs/terms.html" class="nav-link">Terms of Service</a>
+            <div class="nav-section">API</div>
+            <a href="/docs/api-auth.html" class="nav-link">Authentication</a>
+            <a href="/docs/api-users.html" class="nav-link">Users</a>
+            <a href="/docs/api-reports.html" class="nav-link">Reports</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://nomchat-id.up.railway.app" target="_blank" class="back-link">← Back to Nomchat ID</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        <div class="content-inner">
+            <div class="breadcrumb">Overview → Cookie Policy</div>
+            <h1>Cookie Policy</h1>
+            <p class="lead">Last updated: April 2026</p>
+
+            <div class="info-box">
+                <strong>Summary</strong>
+                <p>We use cookies to keep you signed in and remember your preferences. You can decline non-essential cookies via the banner on first visit.</p>
+            </div>
+
+            <h2>What are cookies?</h2>
+            <p>Cookies are small text files stored in your browser when you visit a website. They allow the site to remember information about your visit, such as your login session or language preference.</p>
+
+            <h2>Cookies we use</h2>
+            <table class="doc-table">
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Duration</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>session</code></td>
+                    <td><span class="badge badge-required">Required</span></td>
+                    <td>Session</td>
+                    <td>Keeps you signed in. Set by the Flask server after successful authentication.</td>
+                </tr>
+                <tr>
+                    <td><code>nc_consent</code></td>
+                    <td><span class="badge badge-required">Required</span></td>
+                    <td>365 days</td>
+                    <td>Stores your cookie consent choice (accepted or declined).</td>
+                </tr>
+                <tr>
+                    <td><code>nc_functional</code></td>
+                    <td><span class="badge badge-functional">Functional</span></td>
+                    <td>365 days</td>
+                    <td>Enables functional features like language preference. Set only if you accept cookies.</td>
+                </tr>
+                <tr>
+                    <td><code>nc_analytics</code></td>
+                    <td><span class="badge badge-analytics">Analytics</span></td>
+                    <td>365 days</td>
+                    <td>Anonymous usage analytics to improve the platform. Set only if you accept cookies.</td>
+                </tr>
+            </table>
+
+            <h2>Cookie types explained</h2>
+
+            <h3>Required cookies</h3>
+            <p>These cookies are necessary for the website to function. They cannot be disabled. Without them, you cannot sign in or use core features.</p>
+
+            <h3>Functional cookies</h3>
+            <p>These cookies remember your preferences (like language) to provide a better experience. They are set only if you accept cookies via the consent banner.</p>
+
+            <h3>Analytics cookies</h3>
+            <p>These cookies collect anonymous data about how you use the site. No personally identifiable information is collected. They are set only if you accept cookies.</p>
+
+            <h2>Managing cookies</h2>
+            <p>You can manage cookies in several ways:</p>
+            <ul>
+                <li><strong>Consent banner</strong> — shown on your first visit. Click "Decline" to reject non-essential cookies.</li>
+                <li><strong>Browser settings</strong> — you can delete or block cookies in your browser settings at any time.</li>
+                <li><strong>Clear site data</strong> — clearing your browser's site data for <code>nomchat-id.up.railway.app</code> will remove all cookies.</li>
+            </ul>
+
+            <div class="warning-box">
+                <strong>⚠️ Note</strong>
+                <p>Deleting the <code>session</code> cookie will sign you out of Nomchat ID.</p>
+            </div>
+
+            <h2>Third-party cookies</h2>
+            <p>We do not use any third-party cookies or tracking services (e.g. Google Analytics, Facebook Pixel). All cookies are set directly by Nomchat ID.</p>
+
+            <h2>Contact</h2>
+            <p>Questions about our cookie policy? Contact us at <a href="mailto:privacy@nomchat.id">privacy@nomchat.id</a></p>
+        </div>
+    </main>
+</body>
+</html>

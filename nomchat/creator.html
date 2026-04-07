@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Panel — Nomchat ID</title>
+    <style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+    --bg:#0a0a0f; --bg2:#0f0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07);
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+    --text:#f0f0ff; --text2:rgba(240,240,255,0.6); --text3:rgba(240,240,255,0.35);
+    --gold:#f59e0b; --green:#10b981; --red:#ef4444;
+    --grad-creator:linear-gradient(135deg,#f59e0b,#ef4444,#ec4899);
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:40px 24px 80px; }
+body::before { content:''; position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 600px 400px at 50% 0%, rgba(245,158,11,0.07) 0%, transparent 70%); pointer-events:none; }
+
+.header { width:100%; max-width:720px; display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; position:relative; z-index:1; }
+.logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.logo-icon { font-size:1.4em; filter:drop-shadow(0 0 8px rgba(245,158,11,0.6)); }
+.logo-name { font-weight:900; font-size:1em; background:var(--grad-creator); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:1px; }
+.logo-badge { background:var(--grad-creator); color:#fff; font-size:0.55em; font-weight:900; padding:2px 7px; border-radius:5px; }
+.back-btn { padding:8px 18px; border-radius:99px; background:var(--surface); border:1px solid var(--border2); color:var(--text2); font-size:0.85em; font-weight:700; text-decoration:none; transition:all 0.2s; }
+.back-btn:hover { color:var(--text); border-color:rgba(245,158,11,0.4); }
+
+.title { font-size:2em; font-weight:900; margin-bottom:6px; background:var(--grad-creator); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; position:relative; z-index:1; }
+.sub { color:var(--text3); font-size:0.88em; margin-bottom:40px; position:relative; z-index:1; }
+
+.grid { width:100%; max-width:720px; display:flex; flex-direction:column; gap:20px; position:relative; z-index:1; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px 32px; transition:border-color 0.2s; }
+.card:hover { border-color:var(--border2); }
+.card-title { font-size:0.72em; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); margin-bottom:20px; }
+
+/* Status card */
+.status-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.status-dot { width:10px; height:10px; border-radius:50%; }
+.status-dot.online { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,0.6); }
+.status-dot.maintenance { background:var(--gold); box-shadow:0 0 8px rgba(245,158,11,0.6); animation:blink 1.5s ease-in-out infinite; }
+.status-dot.offline { background:var(--red); box-shadow:0 0 8px rgba(239,68,68,0.6); animation:blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-text { font-size:0.9em; font-weight:700; }
+.status-text.online { color:var(--green); }
+.status-text.maintenance { color:var(--gold); }
+.status-text.offline { color:var(--red); }
+
+/* Info rows */
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); font-size:0.88em; }
+.info-row:last-child { border-bottom:none; }
+.info-label { color:var(--text3); font-weight:600; }
+.info-value { font-weight:700; }
+
+/* Access badge */
+.access-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:99px; font-size:0.82em; font-weight:800; }
+.access-ok  { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+.access-no  { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="profile.html" class="back-btn">← Back</a>
+    <a href="profile.html" class="logo">
+        <span class="logo-icon">👑</span>
+        <span class="logo-name">CREATOR PANEL</span>
+        <span class="logo-badge">NOMCHAT</span>
+    </a>
+</div>
+
+<h1 class="title">Creator Panel</h1>
+<p class="sub">Only accessible to creator@nom.ru</p>
+
+<div class="grid">
+
+    <!-- Site status (read-only) -->
+    <div class="card">
+        <div class="card-title">Site Status</div>
+        <div class="status-row">
+            <div class="status-dot online" id="status-dot"></div>
+            <span class="status-text online" id="status-text">ONLINE</span>
+        </div>
+        <p style="font-size:0.85em;color:var(--text2)">You can view the current site status. To change it, contact the developer.</p>
+    </div>
+
+    <!-- Creator access info -->
+    <div class="card">
+        <div class="card-title">Your Access</div>
+        <div class="info-row">
+            <span class="info-label">Role</span>
+            <span class="info-value" style="background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900">CREATOR</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Maintenance bypass</span>
+            <span class="access-badge access-ok">✓ Allowed</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Admin panel</span>
+            <span class="access-badge access-no">✕ No access</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Dev panel</span>
+            <span class="access-badge access-no">✕ No access</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Site during maintenance</span>
+            <span class="access-badge access-ok">✓ Full access</span>
+        </div>
+    </div>
+
+    <!-- Platform info -->
+    <div class="card">
+        <div class="card-title">Platform</div>
+        <div class="info-row"><span class="info-label">Platform</span><span class="info-value">Nomchat ID</span></div>
+        <div class="info-row"><span class="info-label">Version</span><span class="info-value">3.0.0</span></div>
+        <div class="info-row"><span class="info-label">Status page</span><span class="info-value" id="platform-status">Loading…</span></div>
+    </div>
+
+</div>
+
+<script>
+const API = '';
+
+async function init() {
+    const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+    if (!res.ok) { window.location.href = 'login.html'; return; }
+    const user = await res.json();
+    if (user.email !== 'creator@nom.ru' && !user.is_creator) { window.location.href = 'index.html'; return; }
+
+    const sr = await fetch(`${API}/api/creator/status`, { credentials: 'include' });
+    const s  = await sr.json();
+
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    const ps  = document.getElementById('platform-status');
+
+    if (s.maintenance) {
+        dot.className = 'status-dot maintenance'; txt.className = 'status-text maintenance'; txt.textContent = 'MAINTENANCE';
+        ps.textContent = '⚙️ Maintenance';
+    } else {
+        dot.className = 'status-dot online'; txt.className = 'status-text online'; txt.textContent = 'ONLINE';
+        ps.textContent = '✅ All systems operational';
+    }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomchat ID — Connect your app</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .lang-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.82em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        .lang-btn:hover { background: rgba(255,255,255,0.25); }
+    </style>
+</head>
+<body>
+
+<header class="nc-header">
+    <div class="nc-header-inner">
+        <a href="index.html" class="nc-logo">
+            <span class="nc-logo-icon">💬</span>
+            <span class="nc-logo-name">NOMCHAT</span>
+            <span class="nc-logo-badge">ID</span>
+        </a>
+        <nav class="nc-nav">
+            <a href="index.html" class="nc-nav-link" data-i18n="nav.home">Home</a>
+            <a href="games.html" class="nc-nav-link" data-i18n="nav.apps">Apps</a>
+            <a href="connect.html" class="nc-nav-link active" data-i18n="nav.connect">Connect</a>
+            <a href="profile.html" class="nc-nav-link" id="nav-profile" style="display:none" data-i18n="nav.profile">Profile</a>
+        </nav>
+        <div style="display:flex;align-items:center">
+            <div id="header-user-area">
+                <a href="login.html" class="nc-header-btn" data-i18n="nav.signin">Sign in</a>
+            </div>
+            <button class="lang-btn" id="langToggleBtn" onclick="toggleLang()">🇷🇺 RU</button>
+        </div>
+    </div>
+</header>
+
+<section class="nc-hero" style="padding:60px 24px 80px">
+    <div class="nc-hero-inner">
+        <h1 class="nc-hero-title" style="font-size:2.5em" data-i18n="connectpage.title">Connect your app<br>to Nomchat ID</h1>
+        <p class="nc-hero-sub" data-i18n="connectpage.sub">Link any supported app to your Nomchat ID account. Use on any device, your identity always with you.</p>
+    </div>
+</section>
+
+<section class="nc-section">
+    <div class="nc-section-inner">
+        <div class="nc-section-label" data-i18n="connectpage.how">How it works</div>
+        <h2 class="nc-section-title" data-i18n="connectpage.steps">3 simple steps</h2>
+        <div class="nc-feat-grid" style="max-width:800px">
+            <div class="nc-feat-card" style="text-align:center">
+                <div style="width:56px;height:56px;border-radius:50%;background:#e3f2fd;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5em;font-weight:900;color:#1565c0">1</div>
+                <h3 data-i18n="connect.step1.title">Create Nomchat ID</h3>
+                <p data-i18n="connect.step1.desc">Sign up with your email. Takes 30 seconds. No password needed.</p>
+            </div>
+            <div class="nc-feat-card" style="text-align:center">
+                <div style="width:56px;height:56px;border-radius:50%;background:#e3f2fd;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5em;font-weight:900;color:#1565c0">2</div>
+                <h3 data-i18n="connectpage.step2.title">Open AI Chat Pro</h3>
+                <p data-i18n="connectpage.step2.desc">On the login screen, click "Sign in with Nomchat ID".</p>
+            </div>
+            <div class="nc-feat-card" style="text-align:center">
+                <div style="width:56px;height:56px;border-radius:50%;background:#e3f2fd;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5em;font-weight:900;color:#1565c0">3</div>
+                <h3 data-i18n="connectpage.step3.title">Verify &amp; go</h3>
+                <p data-i18n="connectpage.step3.desc">Enter your email, get the code, confirm — your app is now connected.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="nc-section nc-section-gray">
+    <div class="nc-section-inner">
+        <div class="nc-section-label" data-i18n="connectpage.supported">Supported apps</div>
+        <h2 class="nc-section-title" data-i18n="connectpage.connect">Connect these apps</h2>
+        <div class="nc-games-grid">
+            <div class="nc-game-card" style="cursor:default">
+                <div class="nc-game-banner" style="background:linear-gradient(135deg,#1a1a2e,#667eea,#764ba2)">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="nc-game-body">
+                    <div class="nc-game-name">AI Chat Pro</div>
+                    <div class="nc-game-dev" data-i18n="aichat.dev">by AI Chat Company</div>
+                    <div class="nc-game-desc" data-i18n="aichat.desc">Умный AI-ассистент на базе Llama 3.3 70B. Чат, музыка, код — всё в одном приложении.</div>
+                    <div class="nc-game-footer">
+                        <div class="nc-game-badge"><span class="nc-game-badge-icon">✅</span> <span data-i18n="badge.supported">Supported</span></div>
+                        <a href="http://localhost:3000/auth.html" target="_blank" class="nc-game-btn" data-i18n="btn.connect">Connect</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="nc-footer">
+    <div class="nc-footer-inner">
+        <div>
+            <a href="index.html" class="nc-footer-logo">
+                <span class="nc-logo-icon">💬</span>
+                <span class="nc-logo-name">NOMCHAT</span>
+                <span class="nc-logo-badge">ID</span>
+            </a>
+            <p class="nc-footer-tagline" data-i18n="footer.tagline">The identity platform.</p>
+        </div>
+        <div class="nc-footer-links">
+            <a href="https://nomchat-id.up.railway.app/docs/privacy.html" target="_blank" data-i18n="footer.privacy">Privacy Policy</a>
+            <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank" data-i18n="footer.terms">Terms of Service</a>
+            <a href="https://nomchat-id.up.railway.app/docs/report.html" target="_blank" data-i18n="footer.support">Support</a>
+        </div>
+    </div>
+    <div class="nc-footer-bottom">© 2026 Nomchat ID. All rights reserved.</div>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script src="cookies.js"></script><script src="ai-widget.js"></script></body>
+</html>

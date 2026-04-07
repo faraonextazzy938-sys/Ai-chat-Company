@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomchat ID Docs</title>
+    <link rel="stylesheet" href="/docs/style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">💬</span>
+            <span class="logo-name">NOMCHAT</span>
+            <span class="logo-badge">DOCS</span>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section">Overview</div>
+            <a href="/docs/index.html" class="nav-link active">Introduction</a>
+            <a href="/docs/cookies.html" class="nav-link">Cookie Policy</a>
+            <a href="/docs/privacy.html" class="nav-link">Privacy Policy</a>
+            <a href="/docs/terms.html" class="nav-link">Terms of Service</a>
+            <div class="nav-section">API</div>
+            <a href="/docs/api-auth.html" class="nav-link">Authentication</a>
+            <a href="/docs/api-users.html" class="nav-link">Users</a>
+            <a href="/docs/api-reports.html" class="nav-link">Reports</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://nomchat-id.up.railway.app" target="_blank" class="back-link">← Back to Nomchat ID</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        <div class="content-inner">
+            <div class="breadcrumb">Overview</div>
+            <h1>Nomchat ID Documentation</h1>
+            <p class="lead">Welcome to the official documentation for Nomchat ID — the identity platform for apps and services.</p>
+
+            <div class="cards-grid">
+                <a href="/docs/cookies.html" class="doc-card">
+                    <div class="doc-card-icon">🍪</div>
+                    <h3>Cookie Policy</h3>
+                    <p>Learn what cookies we use and why.</p>
+                </a>
+                <a href="/docs/privacy.html" class="doc-card">
+                    <div class="doc-card-icon">🔒</div>
+                    <h3>Privacy Policy</h3>
+                    <p>How we collect and protect your data.</p>
+                </a>
+                <a href="/docs/terms.html" class="doc-card">
+                    <div class="doc-card-icon">📄</div>
+                    <h3>Terms of Service</h3>
+                    <p>Rules and guidelines for using Nomchat ID.</p>
+                </a>
+                <a href="/docs/api-auth.html" class="doc-card">
+                    <div class="doc-card-icon">🔑</div>
+                    <h3>API Reference</h3>
+                    <p>Integrate Nomchat ID into your app.</p>
+                </a>
+            </div>
+
+            <h2>What is Nomchat ID?</h2>
+            <p>Nomchat ID is a unified identity platform that lets users sign in to multiple apps with a single account. Authentication is done via one-time email codes — no passwords required.</p>
+
+            <div class="info-box">
+                <strong>🚀 Quick start</strong>
+                <p>To integrate Nomchat ID into your app, see the <a href="/docs/api-auth.html">Authentication API</a> docs.</p>
+            </div>
+
+            <h2>Platform</h2>
+            <table class="doc-table">
+                <tr><th>Property</th><th>Value</th></tr>
+                <tr><td>Base URL</td><td><code>https://nomchat-id.up.railway.app</code></td></tr>
+                <tr><td>Auth method</td><td>Email OTP + Session cookie</td></tr>
+                <tr><td>Database</td><td>SQLite (via SQLAlchemy)</td></tr>
+                <tr><td>Framework</td><td>Python Flask</td></tr>
+                <tr><td>Version</td><td>3.0.0</td></tr>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

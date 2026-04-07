@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomchat ID — Авторизация</title>
+    <link rel="stylesheet" href="login.css">
+    <style>
+        .oauth-info {
+            background: rgba(21, 101, 192, 0.1);
+            border: 1px solid rgba(21, 101, 192, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .oauth-app-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .oauth-app-desc {
+            font-size: 13px;
+            color: #aaa;
+        }
+        .oauth-app-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .sc-btn.authorize {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sc-btn.authorize:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body>
+<div class="sc-wrap">
+  <div class="sc-card">
+
+    <div class="sc-logo">
+      <span class="sc-logo-icon">💬</span>
+      <span class="sc-logo-name">NOMCHAT</span>
+      <span class="sc-logo-badge">ID</span>
+    </div>
+
+    <!-- OAuth App Info -->
+    <div class="oauth-info" id="appInfo">
+        <div class="oauth-app-icon">🤖</div>
+        <div class="oauth-app-name" id="appName">AI Chat Pro</div>
+        <div class="oauth-app-desc">запрашивает доступ к вашему Nomchat ID</div>
+    </div>
+
+    <div class="sc-progress">
+      <span class="sc-lbl active" id="lbl1">Войти</span>
+      <div class="sc-track"><div class="sc-fill" id="fill"></div></div>
+      <div class="sc-dot"></div>
+      <span class="sc-lbl" id="lbl2">Подтвердить</span>
+    </div>
+
+    <!-- Step 1: Email -->
+    <div class="sc-panel active" id="s1">
+      <h2 class="sc-title">Войти через Nomchat ID</h2>
+      <p class="sc-sub">Введите email — мы отправим код подтверждения</p>
+      <input type="email" id="email-inp" class="sc-input" placeholder="your@email.com" autocomplete="email">
+      <button class="sc-btn" id="btn-login" onclick="doLogin()">ПРОДОЛЖИТЬ</button>
+      <button class="sc-btn-out" onclick="cancelAuth()">ОТМЕНА</button>
+    </div>
+
+    <!-- Step 2: Code -->
+    <div class="sc-panel" id="s2">
+      <h2 class="sc-title">Введите код</h2>
+      <p class="sc-sub">Код отправлен на <strong id="email-show"></strong></p>
+      <div class="sc-demo" id="demo-box" style="display:none">
+        <span class="sc-demo-lbl">Ваш код:</span>
+        <span class="sc-demo-val" id="demo-val">------</span>
+      </div>
+      <input type="text" id="code-inp" class="sc-input sc-code" placeholder="123 456" maxlength="7" inputmode="numeric">
+      <button class="sc-btn ready" id="btn-verify" onclick="doVerify()">ПОДТВЕРДИТЬ</button>
+      <button class="sc-btn-out" onclick="goStep(1)">НАЗАД</button>
+      <button class="sc-link" onclick="resend()">Не получили код?</button>
+    </div>
+
+    <!-- Step 3: Username (только для новых) -->
+    <div class="sc-panel" id="s3">
+      <h2 class="sc-title">Выберите имя</h2>
+      <p class="sc-sub">Придумайте уникальное имя для Nomchat ID</p>
+      <input type="text" id="username-inp" class="sc-input" placeholder="username" maxlength="30" autocomplete="off">
+      <p class="sc-note" id="username-hint" style="color:#999">3–30 символов. Буквы, цифры и _</p>
+      <button class="sc-btn" id="btn-username" onclick="doSetUsername()" disabled>ПРОДОЛЖИТЬ</button>
+      <button class="sc-btn-out" onclick="goStep(2)">НАЗАД</button>
+    </div>
+
+    <!-- Step 4: Authorize -->
+    <div class="sc-panel" id="s4">
+      <h2 class="sc-title" style="text-align:center">Разрешить доступ?</h2>
+      <p class="sc-sub" style="text-align:center">
+        Вы входите как <strong id="confirm-username">—</strong><br>
+        в приложение <strong id="confirm-app">AI Chat Pro</strong>
+      </p>
+      <div style="background:rgba(102,126,234,0.1);border-radius:12px;padding:16px;margin:16px 0;font-size:13px;color:#aaa;line-height:1.8;">
+        Приложение получит доступ к:<br>
+        ✓ Вашему имени пользователя<br>
+        ✓ Вашему email адресу<br>
+        ✓ Аватару профиля
+      </div>
+      <button class="sc-btn authorize" onclick="doAuthorize()">РАЗРЕШИТЬ</button>
+      <button class="sc-btn-out" onclick="cancelAuth()">ОТКАЗАТЬ</button>
+    </div>
+
+    <!-- Step 5: Done -->
+    <div class="sc-panel" id="s5">
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:64px;margin-bottom:16px;">✅</div>
+        <h2 class="sc-title" style="text-align:center">Авторизация успешна!</h2>
+        <p class="sc-sub">Возвращаемся в AI Chat Pro...</p>
+      </div>
+    </div>
+
+  </div>
+  <div class="sc-footer">
+    <a href="#">Политика конфиденциальности</a>
+    <a href="#">Условия использования</a>
+  </div>
+</div>
+<script>
+const API = '';
+const params = new URLSearchParams(window.location.search);
+const APP_ID = params.get('app_id') || 'ai-chat-pro';
+const REDIRECT_URI = params.get('redirect_uri') || '';
+const APP_NAME = params.get('app_name') || 'AI Chat Pro';
+
+// Update app name in UI
+document.getElementById('appName').textContent = APP_NAME;
+document.getElementById('confirm-app').textContent = APP_NAME;
+
+let state = { email: '', userId: null, username: '' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Проверяем — может уже залогинен
+    try {
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 3000);
+        const res = await fetch(`${API}/api/auth/me`, { credentials: 'include', signal: ctrl.signal });
+        if (res.ok) {
+            const user = await res.json();
+            state.userId = user.id;
+            state.username = user.username;
+            document.getElementById('confirm-username').textContent = user.username;
+            goStep(4);
+            return;
+        }
+    } catch (_) {}
+
+    document.getElementById('email-inp').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('code-inp').addEventListener('keydown', e => { if (e.key === 'Enter') doVerify(); });
+    document.getElementById('username-inp').addEventListener('keydown', e => { if (e.key === 'Enter') doSetUsername(); });
+
+    document.getElementById('email-inp').addEventListener('input', e => {
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim());
+        document.getElementById('btn-login').classList.toggle('ready', ok);
+    });
+
+    document.getElementById('code-inp').addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 6);
+        e.target.value = v.length > 3 ? v.slice(0, 3) + ' ' + v.slice(3) : v;
+    });
+
+    document.getElementById('username-inp').addEventListener('input', e => {
+        const val = e.target.value.trim();
+        const ok = /^[a-zA-Z0-9_]{3,30}$/.test(val);
+        const hint = document.getElementById('username-hint');
+        const btn = document.getElementById('btn-username');
+        hint.style.color = ok ? '#4caf50' : (val ? '#e53935' : '#999');
+        hint.textContent = ok ? '✓ Отлично!' : (val.length < 3 ? 'Минимум 3 символа' : 'Только буквы, цифры и _');
+        btn.classList.toggle('ready', ok);
+        btn.disabled = !ok;
+    });
+});
+
+async function doLogin() {
+    const email = document.getElementById('email-inp').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { shake('email-inp'); return; }
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sc-spinner"></span>Отправляем...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/send-code`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+        state.email = email;
+        document.getElementById('email-show').textContent = email;
+
+        if (data.demo_code) {
+            document.getElementById('demo-val').textContent = data.demo_code.slice(0, 3) + ' ' + data.demo_code.slice(3);
+            document.getElementById('demo-box').style.display = 'flex';
+        }
+        goStep(2);
+    } catch (e) { shake('email-inp'); }
+
+    btn.disabled = false;
+    btn.innerHTML = 'ПРОДОЛЖИТЬ';
+}
+
+async function doVerify() {
+    const raw = document.getElementById('code-inp').value.replace(/\s/g, '');
+    if (raw.length !== 6) { shake('code-inp'); return; }
+
+    const btn = document.getElementById('btn-verify');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sc-spinner"></span>Проверяем...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/verify`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: state.email, code: raw })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Неверный код');
+
+        state.userId = data.user.id;
+        state.username = data.user.username;
+
+        if (data.is_new_user) {
+            document.getElementById('username-inp').value = data.user.username;
+            document.getElementById('username-inp').dispatchEvent(new Event('input'));
+            goStep(3);
+        } else {
+            document.getElementById('confirm-username').textContent = data.user.username;
+            goStep(4);
+        }
+        return;
+    } catch (_) {
+        shake('code-inp');
+        document.getElementById('code-inp').value = '';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'ПОДТВЕРДИТЬ';
+}
+
+async function doSetUsername() {
+    const name = document.getElementById('username-inp').value.trim();
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(name)) { shake('username-inp'); return; }
+
+    const btn = document.getElementById('btn-username');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sc-spinner"></span>Сохраняем...';
+
+    try {
+        const res = await fetch(`${API}/api/users/${state.userId}/username`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+        state.username = data.username;
+        document.getElementById('confirm-username').textContent = data.username;
+        goStep(4);
+        return;
+    } catch (e) {
+        document.getElementById('username-hint').style.color = '#e53935';
+        document.getElementById('username-hint').textContent = e.message || 'Имя занято';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'ПРОДОЛЖИТЬ';
+    btn.classList.add('ready');
+}
+
+async function doAuthorize() {
+    try {
+        const res = await fetch(`${API}/api/auth/token/issue`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ app_id: APP_ID })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка');
+
+        goStep(5);
+
+        // Передаём токен обратно
+        setTimeout(() => {
+            if (REDIRECT_URI) {
+                const url = new URL(REDIRECT_URI);
+                url.searchParams.set('token', data.token);
+                url.searchParams.set('username', state.username);
+                window.location.href = url.toString();
+            } else if (window.opener) {
+                // Popup mode
+                window.opener.postMessage({
+                    type: 'NOMCHAT_AUTH_SUCCESS',
+                    token: data.token,
+                    username: state.username
+                }, '*');
+                setTimeout(() => window.close(), 1000);
+            }
+        }, 1500);
+    } catch (e) {
+        alert('Ошибка авторизации: ' + e.message);
+    }
+}
+
+function cancelAuth() {
+    if (window.opener) {
+        window.opener.postMessage({ type: 'NOMCHAT_AUTH_CANCEL' }, '*');
+        window.close();
+    } else if (REDIRECT_URI) {
+        const url = new URL(REDIRECT_URI);
+        url.searchParams.set('error', 'access_denied');
+        window.location.href = url.toString();
+    } else {
+        history.back();
+    }
+}
+
+async function resend() {
+    try {
+        const res = await fetch(`${API}/api/auth/send-code`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: state.email })
+        });
+        const data = await res.json();
+        if (data.demo_code) {
+            document.getElementById('demo-val').textContent = data.demo_code.slice(0, 3) + ' ' + data.demo_code.slice(3);
+            document.getElementById('demo-box').style.display = 'flex';
+        }
+    } catch (_) {}
+}
+
+function goStep(n) {
+    document.querySelectorAll('.sc-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('s' + n).classList.add('active');
+    const w = { 1: '20%', 2: '55%', 3: '70%', 4: '88%', 5: '100%' };
+    document.getElementById('fill').style.width = w[n] || '20%';
+    const l1 = document.getElementById('lbl1'), l2 = document.getElementById('lbl2');
+    if (n === 1) { l1.className = 'sc-lbl active'; l2.className = 'sc-lbl'; }
+    else if (n <= 2) { l1.className = 'sc-lbl done'; l2.className = 'sc-lbl active'; }
+    else { l1.className = 'sc-lbl done'; l2.className = 'sc-lbl done'; }
+}
+
+function shake(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('error');
+    void el.offsetWidth;
+    el.classList.add('error');
+    setTimeout(() => el.classList.remove('error'), 1500);
+}
+</script>
+</body>
+</html>

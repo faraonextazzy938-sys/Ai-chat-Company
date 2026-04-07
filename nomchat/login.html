@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomchat ID — Sign in</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+<div class="sc-wrap">
+  <div class="sc-card">
+
+    <div class="sc-logo">
+      <span class="sc-logo-icon">💬</span>
+      <span class="sc-logo-name">NOMCHAT</span>
+      <span class="sc-logo-badge">ID</span>
+    </div>
+
+    <div class="sc-progress">
+      <span class="sc-lbl active" id="lbl1">Log in</span>
+      <div class="sc-track"><div class="sc-fill" id="fill"></div></div>
+      <div class="sc-dot"></div>
+      <span class="sc-lbl" id="lbl2">Verify</span>
+    </div>
+
+    <!-- Step 1: Email -->
+    <div class="sc-panel active" id="s1">
+      <h2 class="sc-title">Log in to Nomchat ID</h2>
+      <p class="sc-sub">Enter your email and we'll send you a verification code.</p>
+      <input type="email" id="email-inp" class="sc-input" placeholder="Enter your email" autocomplete="email">
+      <p class="sc-note">This site is protected by reCAPTCHA and the Google <a href="https://nomchat-id.up.railway.app/docs/privacy.html" target="_blank">Privacy Policy</a> and <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank">Terms of Service</a> apply.</p>
+      <button class="sc-btn" id="btn-login" onclick="doLogin()">LOG IN</button>
+      <button class="sc-btn-out" onclick="history.back()">CANCEL</button>
+      <button class="sc-link">Want to register a Nomchat ID?</button>
+    </div>
+
+    <!-- Step 2: Code -->
+    <div class="sc-panel" id="s2">
+      <h2 class="sc-title">Almost there!</h2>
+      <p class="sc-sub">A verification code has been sent to your email<br><strong id="email-show"></strong></p>
+      <div class="sc-demo" id="demo-box" style="display:none">
+        <span class="sc-demo-lbl">Your code:</span>
+        <span class="sc-demo-val" id="demo-val">------</span>
+      </div>
+      <input type="text" id="code-inp" class="sc-input sc-code" placeholder="123 456" maxlength="7" inputmode="numeric">
+      <button class="sc-btn ready" id="btn-verify" onclick="doVerify()">CONTINUE</button>
+      <button class="sc-btn-out" onclick="goStep(1)">GO BACK</button>
+      <button class="sc-link" onclick="resend()">Didn't receive the code?</button>
+    </div>
+
+    <!-- Step 3: Username (только для новых) -->
+    <div class="sc-panel" id="s3">
+      <h2 class="sc-title">Choose your name</h2>
+      <p class="sc-sub">Pick a unique username for your Nomchat ID. You can change it later.</p>
+      <input type="text" id="username-inp" class="sc-input" placeholder="Enter username" maxlength="30" autocomplete="off">
+      <p class="sc-note" id="username-hint" style="color:#999">3–30 characters. Letters, numbers and underscores only.</p>
+      <button class="sc-btn" id="btn-username" onclick="doSetUsername()" disabled>CONTINUE</button>
+      <button class="sc-btn-out" onclick="goStep(2)">GO BACK</button>
+    </div>
+
+    <!-- Step 4: Avatar -->
+    <div class="sc-panel" id="s4">
+      <h2 class="sc-title">Choose your avatar</h2>
+      <p class="sc-sub">Pick an icon for your Nomchat ID profile</p>
+      <div class="sc-av-grid" id="av-grid"></div>
+      <button class="sc-btn" id="btn-av" onclick="confirmAvatar()" disabled>CONFIRM</button>
+    </div>
+
+    <!-- Step 5: Done -->
+    <div class="sc-panel" id="s5">
+      <div class="sc-done-ring"><div class="sc-done-av" id="done-av">💬</div></div>
+      <div class="sc-done-name">
+        <span class="sc-id-badge">ID</span>
+        <span id="done-username">Player</span>
+      </div>
+      <h2 class="sc-title" style="text-align:center;margin-top:14px">You are all set!</h2>
+      <p class="sc-sub">Your Nomchat ID is ready to use.</p>
+      <button class="sc-btn ready" onclick="window.location.href='profile.html'">VIEW PROFILE</button>
+    </div>
+
+  </div>
+  <div class="sc-footer">
+    <a href="https://nomchat-id.up.railway.app/docs/privacy.html" target="_blank">Privacy Policy</a>
+    <a href="https://nomchat-id.up.railway.app/docs/terms.html" target="_blank">Terms of Service</a>
+    <a href="https://nomchat-id.up.railway.app/docs/cookies.html" target="_blank">Cookie Policy</a>
+  </div>
+</div>
+<script src="i18n.js"></script><script src="login.js"></script>
+<script src="cookies.js"></script><script src="ai-widget.js"></script></body>
+</html>
