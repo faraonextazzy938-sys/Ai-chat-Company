@@ -4,7 +4,14 @@ from database import db, User, ChatSession, ChatMessage, PLANS
 from datetime import datetime, timedelta
 from functools import wraps
 import secrets, os, re, requests, traceback
-import google.generativeai as genai
+
+# Optional: Google Gemini (may have compatibility issues with Python 3.14+)
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except Exception as e:
+    GEMINI_AVAILABLE = False
+    print(f"⚠️  Warning: Google Gemini not available: {e}")
 
 app = Flask(__name__, static_folder='.')
 app.secret_key = os.environ.get('SECRET_KEY', 'aichat-company-secret-key-2026-stable')
