@@ -22,8 +22,8 @@
         </a>
         <nav class="nav">
             <a href="/chat.html" class="nav-link" style="font-weight:600">💬 Chat</a>
+            <a href="/features.html" class="nav-link">✨ Features</a>
             <a href="#demo" class="nav-link">Try it</a>
-            <a href="#features" class="nav-link">Features</a>
             <a href="#nomchat" class="nav-link">Nomchat ID</a>
         </nav>
         <div class="header-actions" id="headerActions">
@@ -497,7 +497,7 @@ function addMsg(text, role) {
     div.className = `chat-msg ${role}`;
     const avatar = document.createElement('div');
     avatar.className = `chat-avatar ${role}`;
-    avatar.textContent = role === 'ai' ? 'AI' : 'You';
+    avatar.textContent = role === 'ai' ? 'AI' : 'U';
     const bubble = document.createElement('div');
     bubble.className = 'chat-bubble';
     if (role === 'ai') {
@@ -584,28 +584,7 @@ async function sendDemo() {
         } else if (e.message.includes('503') || e.message.includes('not configured')) {
             addMsg('⚠️ Сервис временно недоступен. Попробуйте позже.', 'ai');
         } else {
-            // Retry with safe fallback message on moderation errors
-            try {
-                const fallbackMsgs = [
-                    { role: 'system', content: SYSTEM },
-                    { role: 'user', content: 'Ответь на предыдущее сообщение пользователя коротко и по делу.' }
-                ];
-                const bubble = addMsg('', 'ai');
-                document.getElementById('typing-indicator')?.remove();
-                let fallbackReply = '';
-                await callAI(fallbackMsgs, 0.7, (chunk, full) => {
-                    fallbackReply = full;
-                    bubble.innerHTML = renderMarkdown(fallbackReply);
-                    messages.scrollTop = messages.scrollHeight;
-                });
-                if (fallbackReply) {
-                    history.push({ role: 'assistant', content: fallbackReply });
-                    await saveAIMessage(fallbackReply);
-                }
-            } catch (_) {
-                document.getElementById('typing-indicator')?.remove();
-                addMsg('Понял тебя. Чем могу помочь?', 'ai');
-            }
+            addMsg('⚠️ Произошла ошибка. Попробуйте переформулировать вопрос или попробуйте позже.', 'ai');
         }
     }
     loading = false; sendBtn.disabled = false; input.focus();

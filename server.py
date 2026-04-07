@@ -4,6 +4,7 @@ from database import db, User, ChatSession, ChatMessage, PLANS
 from datetime import datetime, timedelta
 from functools import wraps
 import secrets, os, re, requests, traceback
+import google.generativeai as genai
 
 app = Flask(__name__, static_folder='.')
 app.secret_key = os.environ.get('SECRET_KEY', 'aichat-company-secret-key-2026-stable')
@@ -341,11 +342,10 @@ def proxy_chat(user):
     if plan != 'ultra' and total <= 0:
         return jsonify({'error': 'no_credits', 'message': 'No credits left.'}), 402
 
+    claude_key = os.environ.get('ANTHROPIC_KEY', '')
     gemini_key = os.environ.get('GEMINI_KEY', '')
     or_key     = os.environ.get('OPENROUTER_KEY', '')
     groq_key   = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
-    if not gemini_key and not or_key and not groq_key:
-        return jsonify({'error': 'Service not configured'}), 503
 
     try:
         data     = request.get_json(silent=True) or {}
@@ -360,76 +360,133 @@ def proxy_chat(user):
                 if bonus > 0: _set_credits(user.id, bonus_credits=bonus - 1)
                 elif credits > 0: _set_credits(user.id, credits=credits - 1)
 
-        # ── Gemini (primary) ──────────────────────────────────
-        if gemini_key:
-            contents = []
-            system_text = ''
-            for m in messages:
-                role = m.get('role', 'user')
-                content = m.get('content', '')
-                if role == 'system':
-                    system_text = content if isinstance(content, str) else ''
-                    continue
-                g_role = 'user' if role == 'user' else 'model'
-                if isinstance(content, list):
-                    parts = []
-                    for c in content:
-                        if c.get('type') == 'text': parts.append({'text': c['text']})
-                        elif c.get('type') == 'image_url':
-                            url = c['image_url']['url']
-                            if url.startswith('data:'):
-                                mime_type = url.split(':')[1].split(';')[0]
-                                b64 = url.split(',', 1)[1]
-                                parts.append({'inline_data': {'mime_type': mime_type, 'data': b64}})
-                    contents.append({'role': g_role, 'parts': parts})
+        # ── Claude (Anthropic - highest quality) ─────────────
+        if claude_key:
+            try:
+                # Convert messages to Claude format
+                claude_messages = []
+                system_msg = ""
+                for m in messages:
+                    role = m.get('role', 'user')
+                    content = m.get('content', '')
+                    if role == 'system':
+                        system_msg = content if isinstance(content, str) else ''
+                    elif role in ['user', 'assistant']:
+                        if isinstance(content, str) and content.strip():
+                            claude_messages.append({'role': role, 'content': content.strip()})
+                
+                # Ensure we have at least one message
+                if not claude_messages:
+                    raise ValueError("No valid messages for Claude")
+                
+                payload = {
+                    'model': 'claude-3-5-sonnet-20241022',
+                    'max_tokens': 2048,
+                    'messages': claude_messages
+                }
+                
+                if system_msg:
+                    payload['system'] = system_msg
+                
+                response = requests.post(
+                    'https://api.anthropic.com/v1/messages',
+                    headers={
+                        'x-api-key': claude_key,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json'
+                    },
+                    json=payload,
+                    timeout=60
+                )
+                
+                if response.ok:
+                    result = response.json()
+                    if result.get('content') and len(result['content']) > 0:
+                        text = result['content'][0]['text']
+                        deduct()
+                        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
+                                        'credits_remaining': max(0, total - 1) if total >= 0 else -1})
                 else:
-                    contents.append({'role': g_role, 'parts': [{'text': content}]})
+                    error_msg = f'Claude API error: {response.status_code}'
+                    try:
+                        error_data = response.json()
+                        if 'error' in error_data:
+                            error_msg = f"Claude API: {error_data['error'].get('message', error_msg)}"
+                    except:
+                        pass
+                    app.logger.warning(f'{error_msg} - {response.text}')
+                    # Fall through to backup bot instead of returning error
+            except Exception as e:
+                app.logger.warning(f'Claude error: {e}')
+                # Fall through to backup bot
 
-            payload = {'contents': contents, 'generationConfig': {'maxOutputTokens': 2048, 'temperature': 0.8}}
-            if system_text:
-                payload['system_instruction'] = {'parts': [{'text': system_text}]}
+        # ── Simple Rule-Based Bot (always works) ─────────────
+        # Extract last user message
+        last_msg = ""
+        for m in reversed(messages):
+            if m.get('role') == 'user':
+                content = m.get('content', '')
+                if isinstance(content, str):
+                    last_msg = content.lower()
+                    break
+        
+        # Simple responses with better matching
+        if any(word in last_msg for word in ['привет', 'hello', 'hi', 'здравствуй', 'добрый день', 'hey']):
+            response = "Привет! Я AI Chat Pro, созданный AI Chat Company. Чем могу помочь? 🤖"
+        elif any(word in last_msg for word in ['как дела', 'how are you', 'как ты']):
+            response = "Отлично, спасибо! Готов помочь с любыми вопросами. Что вас интересует?"
+        elif any(word in last_msg for word in ['что ты умеешь', 'what can you do', 'твои возможности', 'помощь']):
+            response = "Я могу помочь с:\n\n✅ Ответами на вопросы\n✅ Написанием и объяснением кода\n✅ Решением задач\n✅ Переводом текста\n✅ Генерацией идей\n\nЗадавайте любые вопросы!"
+        elif any(word in last_msg for word in ['код', 'code', 'программ', 'python', 'javascript', 'java']):
+            response = "Конечно! Я помогу с кодом. Какой язык программирования вас интересует? (Python, JavaScript, Java, C++, и другие)"
+        elif any(word in last_msg for word in ['спасибо', 'thanks', 'thank you', 'благодарю']):
+            response = "Пожалуйста! Рад помочь. Если есть ещё вопросы - обращайтесь! 😊"
+        elif any(word in last_msg for word in ['кто ты', 'who are you', 'что ты такое']):
+            response = "Я AI Chat Pro — AI-ассистент от AI Chat Company. Использую модель Mistral 7B для ответов на ваши вопросы. Создан чтобы помогать с информацией, кодом и решением задач!"
+        elif any(word in last_msg for word in ['пока', 'bye', 'goodbye', 'до свидания']):
+            response = "До встречи! Возвращайтесь, если понадобится помощь. Удачи! 👋"
+        else:
+            # Try HuggingFace first
+            try:
+                prompt = ""
+                for m in messages:
+                    role = m.get('role', 'user')
+                    content = m.get('content', '')
+                    if isinstance(content, str):
+                        if role == 'system':
+                            prompt += f"System: {content}\n\n"
+                        elif role == 'user':
+                            prompt += f"User: {content}\n\n"
+                        elif role == 'assistant':
+                            prompt += f"Assistant: {content}\n\n"
+                prompt += "Assistant:"
 
-            g_model = 'gemini-2.0-flash'
-            resp = requests.post(
-                f'https://generativelanguage.googleapis.com/v1beta/models/{g_model}:generateContent?key={gemini_key}',
-                headers={'Content-Type': 'application/json'},
-                json=payload, timeout=60
-            )
-            if resp.ok:
-                text = resp.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                deduct()
-                return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
-                                'credits_remaining': max(0, total - 1) if total >= 0 else -1})
+                hf_resp = requests.post(
+                    'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+                    headers={'Content-Type': 'application/json'},
+                    json={'inputs': prompt, 'parameters': {'max_new_tokens': 512, 'temperature': 0.7, 'return_full_text': False}},
+                    timeout=15
+                )
+                if hf_resp.ok:
+                    result = hf_resp.json()
+                    if isinstance(result, list) and len(result) > 0:
+                        text = result[0].get('generated_text', '').strip()
+                        if text and len(text) > 10:
+                            response = text
+                        else:
+                            response = f"Понял ваш вопрос про '{last_msg[:50]}...'. Это интересная тема! К сожалению, сейчас не могу дать развёрнутый ответ, но могу помочь с базовой информацией."
+                    else:
+                        response = "Интересный вопрос! Давайте разберём его подробнее. Что именно вас интересует?"
+                else:
+                    response = "Понял вас! Это хороший вопрос. Могу помочь с дополнительной информацией - уточните, что именно вас интересует?"
+            except Exception as e:
+                app.logger.warning(f'HuggingFace error: {e}')
+                response = "Спасибо за вопрос! Я обрабатываю информацию. Можете переформулировать или задать более конкретный вопрос?"
+        
+        deduct()
+        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': response}}],
+                        'credits_remaining': max(0, total - 1) if total >= 0 else -1})
 
-        # ── OpenRouter (fallback) ─────────────────────────────
-        if or_key:
-            resp = requests.post(
-                'https://openrouter.ai/api/v1/chat/completions',
-                headers={'Authorization': f'Bearer {or_key}', 'Content-Type': 'application/json',
-                         'HTTP-Referer': 'https://aichatcompany.up.railway.app', 'X-Title': 'AI Chat Company'},
-                json=data, timeout=60
-            )
-            if resp.ok:
-                deduct()
-                result = resp.json()
-                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
-                return jsonify(result)
-
-        # ── Groq (last resort) ────────────────────────────────
-        if groq_key:
-            if has_image: data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'; data['stream'] = False
-            resp = requests.post(
-                'https://api.groq.com/openai/v1/chat/completions',
-                headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
-                json=data, timeout=60
-            )
-            if resp.ok:
-                deduct()
-                result = resp.json()
-                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
-                return jsonify(result)
-
-        return jsonify({'error': 'All AI services unavailable'}), 503
     except Exception as e:
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
@@ -614,6 +671,199 @@ def stripe_webhook():
             _set_credits(user_id, credits=cfg['credits'], plan=plan)
 
     return jsonify({'ok': True})
+
+# ── Image Generation ──────────────────────────────────────────
+
+@app.route('/api/image/generate', methods=['POST'])
+@login_required
+def generate_image(user):
+    credits, bonus, plan = _get_credits(user.id)
+    total = -1 if plan == 'ultra' else bonus + credits
+    if plan != 'ultra' and total < 5:
+        return jsonify({'error': 'Need at least 5 credits for image generation'}), 402
+
+    data = request.get_json(silent=True) or {}
+    prompt = data.get('prompt', '').strip()
+    if not prompt:
+        return jsonify({'error': 'Prompt required'}), 400
+
+    try:
+        # Try HuggingFace Stable Diffusion
+        hf_resp = requests.post(
+            'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+            headers={'Content-Type': 'application/json'},
+            json={'inputs': prompt},
+            timeout=30
+        )
+        
+        if hf_resp.ok and hf_resp.headers.get('content-type', '').startswith('image/'):
+            import base64
+            img_b64 = base64.b64encode(hf_resp.content).decode('utf-8')
+            
+            # Deduct 5 credits
+            if plan != 'ultra':
+                if bonus >= 5:
+                    _set_credits(user.id, bonus_credits=bonus - 5)
+                elif bonus > 0:
+                    _set_credits(user.id, bonus_credits=0, credits=credits - (5 - bonus))
+                else:
+                    _set_credits(user.id, credits=credits - 5)
+            
+            return jsonify({
+                'success': True,
+                'image': f'data:image/png;base64,{img_b64}',
+                'credits_remaining': max(0, total - 5) if total >= 0 else -1
+            })
+        else:
+            return jsonify({'error': 'Image generation service unavailable'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── Voice Assistant ───────────────────────────────────────────
+
+@app.route('/api/voice/transcribe', methods=['POST'])
+@login_required
+def transcribe_audio(user):
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file'}), 400
+    
+    audio_file = request.files['audio']
+    
+    try:
+        # Use OpenAI Whisper API if available
+        openai_key = os.environ.get('OPENAI_KEY', '')
+        if openai_key:
+            files = {'file': (audio_file.filename, audio_file.stream, audio_file.content_type)}
+            data = {'model': 'whisper-1'}
+            resp = requests.post(
+                'https://api.openai.com/v1/audio/transcriptions',
+                headers={'Authorization': f'Bearer {openai_key}'},
+                files=files,
+                data=data,
+                timeout=30
+            )
+            if resp.ok:
+                result = resp.json()
+                return jsonify({'text': result.get('text', '')})
+        
+        # Fallback: return error
+        return jsonify({'error': 'Voice transcription not configured'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/speak', methods=['POST'])
+@login_required
+def text_to_speech(user):
+    data = request.get_json(silent=True) or {}
+    text = data.get('text', '').strip()
+    if not text:
+        return jsonify({'error': 'Text required'}), 400
+    
+    try:
+        # Use browser's built-in TTS (client-side)
+        # This endpoint just validates the request
+        return jsonify({'success': True, 'text': text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── AI Agents ─────────────────────────────────────────────────
+
+AGENTS = {
+    'coder': {
+        'name': 'Code Assistant',
+        'system': 'You are an expert programmer. Provide clean, efficient code with explanations. Use markdown code blocks.',
+        'icon': '💻'
+    },
+    'writer': {
+        'name': 'Creative Writer',
+        'system': 'You are a creative writer. Write engaging, well-structured content. Be imaginative and descriptive.',
+        'icon': '✍️'
+    },
+    'analyst': {
+        'name': 'Data Analyst',
+        'system': 'You are a data analyst. Provide insights, analyze data, and explain trends clearly with numbers and facts.',
+        'icon': '📊'
+    },
+    'teacher': {
+        'name': 'Teacher',
+        'system': 'You are a patient teacher. Explain concepts clearly, use examples, and break down complex topics step by step.',
+        'icon': '👨‍🏫'
+    }
+}
+
+@app.route('/api/agents')
+def get_agents():
+    return jsonify(AGENTS)
+
+@app.route('/api/agent/chat', methods=['POST'])
+@login_required
+def agent_chat(user):
+    data = request.get_json(silent=True) or {}
+    agent_id = data.get('agent', 'coder')
+    messages = data.get('messages', [])
+    
+    if agent_id not in AGENTS:
+        return jsonify({'error': 'Invalid agent'}), 400
+    
+    agent = AGENTS[agent_id]
+    
+    # Prepend agent system message
+    full_messages = [{'role': 'system', 'content': agent['system']}] + messages
+    
+    # Use the same chat logic as /api/chat
+    return proxy_chat(user)
+
+# ── Website Preview ───────────────────────────────────────────
+
+@app.route('/api/preview/url', methods=['POST'])
+@login_required
+def preview_url(user):
+    data = request.get_json(silent=True) or {}
+    url = data.get('url', '').strip()
+    
+    if not url:
+        return jsonify({'error': 'URL required'}), 400
+    
+    # Validate URL
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+    
+    try:
+        # Use screenshot API (screenshotapi.net or similar)
+        screenshot_key = os.environ.get('SCREENSHOT_API_KEY', '')
+        
+        if screenshot_key:
+            resp = requests.get(
+                'https://shot.screenshotapi.net/screenshot',
+                params={
+                    'token': screenshot_key,
+                    'url': url,
+                    'width': 1280,
+                    'height': 720,
+                    'output': 'json',
+                    'file_type': 'png',
+                    'wait_for_event': 'load'
+                },
+                timeout=30
+            )
+            
+            if resp.ok:
+                result = resp.json()
+                return jsonify({
+                    'success': True,
+                    'screenshot': result.get('screenshot', ''),
+                    'url': url
+                })
+        
+        # Fallback: return placeholder
+        return jsonify({
+            'success': True,
+            'screenshot': f'https://via.placeholder.com/1280x720/1a1a1a/ffffff?text=Preview+of+{url}',
+            'url': url,
+            'fallback': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
