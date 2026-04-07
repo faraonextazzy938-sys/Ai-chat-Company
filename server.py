@@ -334,58 +334,97 @@ def proxy_chat(user):
     if plan != 'ultra' and total <= 0:
         return jsonify({'error': 'no_credits', 'message': 'No credits left.'}), 402
 
-    or_key   = os.environ.get('OPENROUTER_KEY', '')
-    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
-    if not or_key and not groq_key:
+    gemini_key = os.environ.get('GEMINI_KEY', '')
+    or_key     = os.environ.get('OPENROUTER_KEY', '')
+    groq_key   = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not gemini_key and not or_key and not groq_key:
         return jsonify({'error': 'Service not configured'}), 503
 
     try:
-        data   = request.get_json(silent=True) or {}
-        stream = data.get('stream', False)
+        data     = request.get_json(silent=True) or {}
+        messages = data.get('messages', [])
         has_image = any(
-            isinstance(m.get('content'), list) and
-            any(c.get('type') == 'image_url' for c in m['content'])
-            for m in data.get('messages', [])
+            isinstance(m.get('content'), list) and any(c.get('type') == 'image_url' for c in m['content'])
+            for m in messages
         )
 
+        def deduct():
+            if plan != 'ultra':
+                if bonus > 0: _set_credits(user.id, bonus_credits=bonus - 1)
+                elif credits > 0: _set_credits(user.id, credits=credits - 1)
+
+        # ── Gemini (primary) ──────────────────────────────────
+        if gemini_key:
+            contents = []
+            system_text = ''
+            for m in messages:
+                role = m.get('role', 'user')
+                content = m.get('content', '')
+                if role == 'system':
+                    system_text = content if isinstance(content, str) else ''
+                    continue
+                g_role = 'user' if role == 'user' else 'model'
+                if isinstance(content, list):
+                    parts = []
+                    for c in content:
+                        if c.get('type') == 'text': parts.append({'text': c['text']})
+                        elif c.get('type') == 'image_url':
+                            url = c['image_url']['url']
+                            if url.startswith('data:'):
+                                mime_type = url.split(':')[1].split(';')[0]
+                                b64 = url.split(',', 1)[1]
+                                parts.append({'inline_data': {'mime_type': mime_type, 'data': b64}})
+                    contents.append({'role': g_role, 'parts': parts})
+                else:
+                    contents.append({'role': g_role, 'parts': [{'text': content}]})
+
+            payload = {'contents': contents, 'generationConfig': {'maxOutputTokens': 2048, 'temperature': 0.8}}
+            if system_text:
+                payload['system_instruction'] = {'parts': [{'text': system_text}]}
+
+            g_model = 'gemini-2.0-flash'
+            resp = requests.post(
+                f'https://generativelanguage.googleapis.com/v1beta/models/{g_model}:generateContent?key={gemini_key}',
+                headers={'Content-Type': 'application/json'},
+                json=payload, timeout=60
+            )
+            if resp.ok:
+                text = resp.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                deduct()
+                return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
+                                'credits_remaining': max(0, total - 1) if total >= 0 else -1})
+
+        # ── OpenRouter (fallback) ─────────────────────────────
         if or_key:
-            if has_image:
-                data['model'] = 'meta-llama/llama-4-scout'
-                data['stream'] = False; stream = False
             resp = requests.post(
                 'https://openrouter.ai/api/v1/chat/completions',
-                headers={
-                    'Authorization': f'Bearer {or_key}',
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://aichatcompany.up.railway.app',
-                    'X-Title': 'AI Chat Company',
-                },
-                json=data, timeout=60, stream=stream
+                headers={'Authorization': f'Bearer {or_key}', 'Content-Type': 'application/json',
+                         'HTTP-Referer': 'https://aichatcompany.up.railway.app', 'X-Title': 'AI Chat Company'},
+                json=data, timeout=60
             )
-        else:
-            if has_image:
-                data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'
-                data['stream'] = False; stream = False
+            if resp.ok:
+                deduct()
+                result = resp.json()
+                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
+                return jsonify(result)
+
+        # ── Groq (last resort) ────────────────────────────────
+        if groq_key:
+            if has_image: data['model'] = 'meta-llama/llama-4-scout-17b-16e-instruct'; data['stream'] = False
             resp = requests.post(
                 'https://api.groq.com/openai/v1/chat/completions',
                 headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
-                json=data, timeout=60, stream=stream
+                json=data, timeout=60
             )
+            if resp.ok:
+                deduct()
+                result = resp.json()
+                result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
+                return jsonify(result)
 
-        if resp.ok and plan != 'ultra':
-            if bonus > 0: _set_credits(user.id, bonus_credits=bonus - 1)
-            elif credits > 0: _set_credits(user.id, credits=credits - 1)
-
-        if stream:
-            def generate():
-                for chunk in resp.iter_content(chunk_size=None):
-                    if chunk: yield chunk
-            return app.response_class(generate(), status=resp.status_code, content_type='text/event-stream')
-        result = resp.json()
-        result['credits_remaining'] = max(0, total - 1) if total >= 0 else -1
-        return jsonify(result), resp.status_code
+        return jsonify({'error': 'All AI services unavailable'}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 # ── Desktop Auth ──────────────────────────────────────────────
 
