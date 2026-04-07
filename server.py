@@ -149,10 +149,17 @@ def operator_required(f):
 # ── Static ────────────────────────────────────────────────────
 
 @app.route('/')
-def index(): return send_from_directory('.', 'index.html')
+def index():
+    r = send_from_directory('.', 'index.html')
+    r.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return r
 
 @app.route('/<path:filename>')
-def static_files(filename): return send_from_directory('.', filename)
+def static_files(filename):
+    r = send_from_directory('.', filename)
+    if filename.endswith('.html'):
+        r.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return r
 
 @app.errorhandler(404)
 def not_found(e):
