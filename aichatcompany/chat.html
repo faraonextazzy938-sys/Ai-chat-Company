@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+п»ї<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -165,31 +165,37 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </select>
       <button class="icon-btn" onclick="clearChat()" title="Clear">&#128465;</button>
     </div>
-    <div class="messages" id="messages"><div class="empty" id="emptyState"><div class="empty-logo"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6L10 10L17 6L10 2Z" stroke="black" stroke-width="1.5"/><path d="M3 14L10 18L17 14" stroke="black" stroke-width="1.5"/><path d="M3 10L10 14L17 10" stroke="black" stroke-width="1.5"/></svg></div><h2>AI Chat Pro</h2><p>Мощный ИИ без ограничений.</p><div class="suggestions"><div class="sug" onclick="useSug(this)">Напиши код на Python</div><div class="sug" onclick="useSug(this)">Объясни квантовую физику</div><div class="sug" onclick="useSug(this)">Помоги с эссе</div><div class="sug" onclick="useSug(this)">Придумай бизнес-идею</div></div></div></div>
+    <div class="messages" id="messages"><div class="empty" id="emptyState"><div class="empty-logo"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6L10 10L17 6L10 2Z" stroke="black" stroke-width="1.5"/><path d="M3 14L10 18L17 14" stroke="black" stroke-width="1.5"/><path d="M3 10L10 14L17 10" stroke="black" stroke-width="1.5"/></svg></div><h2>AI Chat Pro</h2><p>Р—Р°РґР°Р№С‚Рµ РјРЅРµ Р»СЋР±РѕР№ РІРѕРїСЂРѕСЃ.</p><div class="suggestions"><div class="sug" onclick="useSug(this)">РќР°РїРёС€Рё РєРѕРґ РЅР° Python</div><div class="sug" onclick="useSug(this)">РћР±СЉСЏСЃРЅРё РєРІР°РЅС‚РѕРІСѓСЋ С„РёР·РёРєСѓ</div><div class="sug" onclick="useSug(this)">РџРѕРјРѕРіРё СЃ РєРѕРґРѕРј</div><div class="sug" onclick="useSug(this)">РџСЂРёРґСѓРјР°Р№ Р±РёР·РЅРµСЃ-РёРґРµСЋ</div></div></div></div>
     <div class="input-area">
       <div class="input-box">
         <div id="imgPreview" class="img-preview" style="display:none"></div>
         <div class="input-top">
-          <textarea id="chatInput" placeholder="Напиши сообщение..." rows="1" oninput="autoResize(this)" onkeydown="onKey(event)"></textarea>
+          <textarea id="chatInput" placeholder="Р’РІРµРґРёС‚Рµ СЃРѕРѕР±С‰РµРЅРёРµ..." rows="1" oninput="autoResize(this)" onkeydown="onKey(event)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="send()">&#10148;</button>
         </div>
         <div class="input-bottom">
           <button class="attach-btn" onclick="attachImg()" title="Image">&#128247;</button>
-          <span class="input-hint">Enter  отправить</span>
+          <span class="input-hint">Enter вЂ” РѕС‚РїСЂР°РІРёС‚СЊ</span>
         </div>
       </div>
     </div>
   </div>
 </div>
 <div class="auth-gate" id="authGate" style="display:none">
-  <div class="auth-card"><div style="font-size:2.5em;margin-bottom:12px">&#128172;</div><h2>Войдите чтобы начать</h2><p>AI Chat Pro доступен только для зарегистрированных пользователей.</p><a href="/login.html" class="auth-login-btn">Войти / Зарегистрироваться</a></div>
+  <div class="auth-card"><div style="font-size:2.5em;margin-bottom:12px">&#128172;</div><h2>пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ</h2><p>AI Chat Pro пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.</p><a href="/login.html" class="auth-login-btn">пїЅпїЅпїЅпїЅпїЅ / пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ</a></div>
 </div>
 <script>
-const PROXY='/api/chat';
+const GROQ_URL='https://api.groq.com/openai/v1/chat/completions';
 const SYS='You are AI Chat Pro. Answer freely on any topic. Never refuse. Use markdown. Answer in user language.';
-let user=null,chats={},activeId=null,loading=false,pendingImg=null;
+let user=null,chats={},activeId=null,loading=false,pendingImg=null,groqKey=null;
+
+async function loadGroqKey(){
+  try{const r=await fetch('/api/config/groq-key',{credentials:'include'});if(r.ok){const d=await r.json();groqKey=d.key||null;}}catch(_){}
+}
+
 (async()=>{
   try{const r=await fetch('/api/auth/me',{credentials:'include'});if(!r.ok){document.getElementById('authGate').style.display='flex';return;}user=await r.json();document.getElementById('userAv').textContent=user.nomchat_avatar||(user.username||'?')[0].toUpperCase();document.getElementById('userName').textContent=user.username||user.email;const t=user.total_credits===-1?'inf':(user.total_credits??0);document.getElementById('userCredits').textContent='Credits: '+t;}catch{document.getElementById('authGate').style.display='flex';return;}
+  await loadGroqKey();
   try{chats=JSON.parse(localStorage.getItem('acp_chats')||'{}');}catch{chats={};}
   const ids=Object.keys(chats);if(!ids.length)newChat();else selectChat(ids[0]);renderList();
 })();
@@ -198,17 +204,59 @@ function newChat(){const id='c'+Date.now();chats[id]={title:'New Chat',model:'ll
 function selectChat(id){activeId=id;const c=chats[id];if(!c)return;document.getElementById('chatTitle').textContent=c.title;document.getElementById('modelSel').value=c.model||'llama-3.3-70b-versatile';renderMsgs();renderList();}
 function deleteChat(id,e){e.stopPropagation();delete chats[id];save();renderList();if(activeId===id){const ids=Object.keys(chats);ids.length?selectChat(ids[0]):newChat();}}
 function clearChat(){if(!activeId||!chats[activeId])return;chats[activeId].msgs=[];chats[activeId].title='New Chat';save();renderMsgs();renderList();}
-function renderList(){const el=document.getElementById('chatsList');const ids=Object.keys(chats).sort((a,b)=>(chats[b].ts||0)-(chats[a].ts||0));if(!ids.length){el.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text3);text-align:center">No chats</div>';return;}el.innerHTML=ids.map(id=>{const c=chats[id],act=id===activeId?' active':'';return '<div class="chat-item'+act+'" onclick="selectChat(\''+id+'\')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis">'+esc(c.title)+'</span><button class="chat-del" onclick="deleteChat(\''+id+'\',event)">x</button></div>';}).join('');}
-function renderMsgs(){const el=document.getElementById('messages');const c=chats[activeId];if(!c||!c.msgs.length){el.innerHTML='<div class="empty"><div class="empty-logo"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6L10 10L17 6L10 2Z" stroke="black" stroke-width="1.5"/><path d="M3 14L10 18L17 14" stroke="black" stroke-width="1.5"/><path d="M3 10L10 14L17 10" stroke="black" stroke-width="1.5"/></svg></div><h2>AI Chat Pro</h2><p>Мощный ИИ без ограничений.</p><div class="suggestions"><div class="sug" onclick="useSug(this)">Напиши код на Python</div><div class="sug" onclick="useSug(this)">Объясни квантовую физику</div><div class="sug" onclick="useSug(this)">Помоги с эссе</div><div class="sug" onclick="useSug(this)">Придумай бизнес-идею</div></div></div>';return;}el.innerHTML='';c.msgs.forEach(m=>addMsgEl(m.role,m.content,false));el.scrollTop=el.scrollHeight;}
-function addMsgEl(role,content,animate){const el=document.getElementById('messages');document.getElementById('emptyState')?.remove();const row=document.createElement('div');row.className='msg-row '+role;if(animate===false)row.style.animation='none';const av=role==='ai'?'AI':(user?.nomchat_avatar||(user?.username||'U')[0].toUpperCase());row.innerHTML='<div class="msg-inner"><div class="msg-av">'+av+'</div><div class="msg-body"><div class="msg-name">'+(role==='ai'?'AI Chat Pro':(user?.username||'You'))+'</div><div class="msg-text">'+(role==='ai'?md(content):escHtml(content))+'</div>'+(role==='ai'?'<div class="msg-actions"><button class="msg-act-btn" onclick="copyMsg(this)">Copy</button><button class="msg-act-btn" onclick="regen()">Regen</button></div>':'')+'</div></div>';row.querySelectorAll('pre').forEach(pre=>{const btn=document.createElement('button');btn.className='copy-code-btn';btn.textContent='Copy';btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector('code')?.textContent||pre.textContent);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000)};pre.appendChild(btn);});el.appendChild(row);el.scrollTop=el.scrollHeight;}
+function renderList(){const el=document.getElementById('chatsList');const ids=Object.keys(chats).sort((a,b)=>(chats[b].ts||0)-(chats[a].ts||0));if(!ids.length){el.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text3);text-align:center">РќРµС‚ С‡Р°С‚РѕРІ</div>';return;}el.innerHTML=ids.map(id=>{const c=chats[id],act=id===activeId?' active':'';return '<div class="chat-item'+act+'" onclick="selectChat(\''+id+'\')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis">'+esc(c.title)+'</span><button class="chat-del" onclick="deleteChat(\''+id+'\',event)">x</button></div>';}).join('');}
+function renderMsgs(){const el=document.getElementById('messages');const c=chats[activeId];if(!c||!c.msgs.length){el.innerHTML='<div class="empty"><div class="empty-logo"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L3 6L10 10L17 6L10 2Z" stroke="black" stroke-width="1.5"/><path d="M3 14L10 18L17 14" stroke="black" stroke-width="1.5"/><path d="M3 10L10 14L17 10" stroke="black" stroke-width="1.5"/></svg></div><h2>AI Chat Pro</h2><p>Р—Р°РґР°Р№С‚Рµ РјРЅРµ Р»СЋР±РѕР№ РІРѕРїСЂРѕСЃ.</p><div class="suggestions"><div class="sug" onclick="useSug(this)">РќР°РїРёС€Рё РєРѕРґ РЅР° Python</div><div class="sug" onclick="useSug(this)">РћР±СЉСЏСЃРЅРё РєРІР°РЅС‚РѕРІСѓСЋ С„РёР·РёРєСѓ</div><div class="sug" onclick="useSug(this)">РџРѕРјРѕРіРё СЃ РєРѕРґРѕРј</div><div class="sug" onclick="useSug(this)">РџСЂРёРґСѓРјР°Р№ Р±РёР·РЅРµСЃ-РёРґРµСЋ</div></div></div>';return;}el.innerHTML='';c.msgs.forEach(m=>addMsgEl(m.role,m.content,false));el.scrollTop=el.scrollHeight;}
+function addMsgEl(role,content,animate){const el=document.getElementById('messages');document.getElementById('emptyState')?.remove();const row=document.createElement('div');row.className='msg-row '+role;if(animate===false)row.style.animation='none';const av=role==='ai'?'AI':(user?.nomchat_avatar||(user?.username||'U')[0].toUpperCase());row.innerHTML='<div class="msg-inner"><div class="msg-av">'+av+'</div><div class="msg-body"><div class="msg-name">'+(role==='ai'?'AI Chat Pro':(user?.username||'Р’С‹'))+'</div><div class="msg-text">'+(role==='ai'?md(content):escHtml(content))+'</div>'+(role==='ai'?'<div class="msg-actions"><button class="msg-act-btn" onclick="copyMsg(this)">РљРѕРїРёСЂРѕРІР°С‚СЊ</button><button class="msg-act-btn" onclick="regen()">РџРѕРІС‚РѕСЂРёС‚СЊ</button></div>':'')+'</div></div>';row.querySelectorAll('pre').forEach(pre=>{const btn=document.createElement('button');btn.className='copy-code-btn';btn.textContent='РљРѕРїРёСЂРѕРІР°С‚СЊ';btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector('code')?.textContent||pre.textContent);btn.textContent='РЎРєРѕРїРёСЂРѕРІР°РЅРѕ!';setTimeout(()=>btn.textContent='РљРѕРїРёСЂРѕРІР°С‚СЊ',2000)};pre.appendChild(btn);});el.appendChild(row);el.scrollTop=el.scrollHeight;}
 function showTyping(){const el=document.getElementById('messages');const d=document.createElement('div');d.className='typing-row';d.id='typing';d.innerHTML='<div class="typing-inner"><div class="msg-av" style="background:#fff;color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">AI</div><div class="typing-dots"><span></span><span></span><span></span></div></div>';el.appendChild(d);el.scrollTop=el.scrollHeight;}
 function hideTyping(){document.getElementById('typing')?.remove();}
-async function send(){const inp=document.getElementById('chatInput');const text=inp.value.trim();if((!text&&!pendingImg)||loading)return;inp.value='';inp.style.height='auto';const c=chats[activeId];if(!c)return;const hasImg=!!pendingImg;const userContent=hasImg?[{type:'text',text:text||'What is in this image?'},{type:'image_url',image_url:{url:pendingImg}}]:text;clearImg();c.msgs.push({role:'user',content:text||'[image]',ts:Date.now()});if(c.title==='New Chat'&&text){c.title=text.substring(0,40)+(text.length>40?'...':'');document.getElementById('chatTitle').textContent=c.title;renderList();}save();addMsgEl('user',text||'[image]');showTyping();loading=true;document.getElementById('sendBtn').disabled=true;const model=document.getElementById('modelSel').value;c.model=model;const apiMsgs=[{role:'system',content:SYS},...c.msgs.slice(-20).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}))];if(hasImg)apiMsgs[apiMsgs.length-1]={role:'user',content:userContent};const models=[hasImg?'meta-llama/llama-4-scout-17b-16e-instruct':model,'llama-3.1-8b-instant','gemma2-9b-it'];let replied=false;for(const m of models){try{const r=await fetch(PROXY,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:m,messages:apiMsgs,max_tokens:2048,temperature:0.9,stream:false})});if(r.status===429)continue;hideTyping();if(!r.ok){const e=await r.json().catch(()=>({}));let msg='';if(r.status===401)msg='Sign in to use AI.';else if(r.status===402)msg='No credits. Top up at /profile.html';else msg='Error: '+(e.error||r.statusText);c.msgs.push({role:'ai',content:msg,ts:Date.now()});save();addMsgEl('ai',msg);}else{const d=await r.json();const reply=d.choices?.[0]?.message?.content||'No response';c.msgs.push({role:'ai',content:reply,ts:Date.now()});save();addMsgEl('ai',reply);if(d.credits_remaining!==undefined)document.getElementById('userCredits').textContent='Credits: '+(d.credits_remaining===-1?'inf':d.credits_remaining);}replied=true;break;}catch(_){}}if(!replied){hideTyping();addMsgEl('ai','All models busy. Wait 1 min.');}loading=false;document.getElementById('sendBtn').disabled=false;inp.focus();}
+function getAgentSystem(text){
+  const t=text.toLowerCase();
+  if(/РєРѕРґ|code|РїСЂРѕРіСЂР°РјРј|function|class|def |import |bug|РѕС€РёР±РєР°|debug/.test(t))return 'You are an expert programmer. Provide clean, efficient code with explanations. Use markdown code blocks.';
+  if(/РЅР°РїРёС€Рё|write|story|СЃС‚Р°С‚СЊСЏ|article|С‚РµРєСЃС‚|essay/.test(t))return 'You are a creative writer. Write engaging, well-structured content.';
+  if(/Р°РЅР°Р»РёР·|analyze|РґР°РЅРЅС‹Рµ|data|СЃС‚Р°С‚РёСЃС‚РёРєР°|statistics/.test(t))return 'You are a data analyst. Provide insights and explain trends clearly with numbers and facts.';
+  if(/РѕР±СЉСЏСЃРЅРё|explain|РїРѕС‡РµРјСѓ|why|С‡С‚Рѕ С‚Р°РєРѕРµ|what is|РєР°Рє СЂР°Р±РѕС‚Р°РµС‚/.test(t))return 'You are a patient teacher. Explain concepts clearly with examples, step by step.';
+  if(/Р±РёР·РЅРµСЃ|business|РјР°СЂРєРµС‚РёРЅРі|marketing|СЃС‚СЂР°С‚РµРіРёСЏ|strategy/.test(t))return 'You are a business consultant. Provide strategic advice and practical solutions.';
+  return SYS;
+}
+async function send(){
+  const inp=document.getElementById('chatInput');const text=inp.value.trim();if((!text&&!pendingImg)||loading)return;
+  inp.value='';inp.style.height='auto';const c=chats[activeId];if(!c)return;
+  const hasImg=!!pendingImg;const userContent=hasImg?[{type:'text',text:text||'Р§С‚Рѕ РЅР° РёР·РѕР±СЂР°Р¶РµРЅРёРё?'},{type:'image_url',image_url:{url:pendingImg}}]:text;
+  clearImg();c.msgs.push({role:'user',content:text||'[image]',ts:Date.now()});
+  if(c.title==='New Chat'&&text){c.title=text.substring(0,40)+(text.length>40?'...':'');document.getElementById('chatTitle').textContent=c.title;renderList();}
+  save();addMsgEl('user',text||'[image]');showTyping();loading=true;document.getElementById('sendBtn').disabled=true;
+  const model=document.getElementById('modelSel').value;c.model=model;
+  const sysPrompt=getAgentSystem(text);
+  const apiMsgs=[{role:'system',content:sysPrompt},...c.msgs.slice(-20).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}))];
+  if(hasImg)apiMsgs[apiMsgs.length-1]={role:'user',content:userContent};
+  const models=hasImg?['meta-llama/llama-4-scout-17b-16e-instruct']:[model,'llama-3.1-8b-instant','gemma2-9b-it'];
+  let replied=false;
+  if(groqKey){
+    for(const m of models){
+      try{
+        const r=await fetch(GROQ_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},body:JSON.stringify({model:m,messages:apiMsgs,max_tokens:2048,temperature:0.9})});
+        if(r.status===429){await new Promise(res=>setTimeout(res,1000));continue;}
+        hideTyping();
+        if(r.ok){const d=await r.json();const reply=d.choices?.[0]?.message?.content||'РќРµС‚ РѕС‚РІРµС‚Р°';c.msgs.push({role:'ai',content:reply,ts:Date.now()});save();addMsgEl('ai',reply);replied=true;break;}
+      }catch(_){}
+    }
+  }
+  if(!replied){
+    try{
+      const r=await fetch('/api/chat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:apiMsgs})});
+      hideTyping();
+      if(r.ok){const d=await r.json();const reply=d.choices?.[0]?.message?.content||'РќРµС‚ РѕС‚РІРµС‚Р°';c.msgs.push({role:'ai',content:reply,ts:Date.now()});save();addMsgEl('ai',reply);if(d.credits_remaining!==undefined)document.getElementById('userCredits').textContent='Credits: '+(d.credits_remaining===-1?'inf':d.credits_remaining);replied=true;}
+      else{const e=await r.json().catch(()=>({}));let msg='';if(r.status===401)msg='Р’РѕР№РґРёС‚Рµ РІ Р°РєРєР°СѓРЅС‚.';else if(r.status===402)msg='РљСЂРµРґРёС‚С‹ Р·Р°РєРѕРЅС‡РёР»РёСЃСЊ.';else msg='РћС€РёР±РєР°: '+(e.error||r.statusText);c.msgs.push({role:'ai',content:msg,ts:Date.now()});save();addMsgEl('ai',msg);replied=true;}
+    }catch(_){}
+  }
+  if(!replied){hideTyping();const msg='Р’СЃРµ РјРѕРґРµР»Рё Р·Р°РЅСЏС‚С‹. РџРѕРїСЂРѕР±СѓР№С‚Рµ С‡РµСЂРµР· РјРёРЅСѓС‚Сѓ.';c.msgs.push({role:'ai',content:msg,ts:Date.now()});save();addMsgEl('ai',msg);}
+  loading=false;document.getElementById('sendBtn').disabled=false;inp.focus();
+}
 async function regen(){const c=chats[activeId];if(!c||c.msgs.length<2)return;if(c.msgs[c.msgs.length-1].role==='ai'){c.msgs.pop();save();}renderMsgs();const last=[...c.msgs].reverse().find(m=>m.role==='user');if(last){document.getElementById('chatInput').value=last.content;await send();}}
-function copyMsg(btn){const t=btn.closest('.msg-body').querySelector('.msg-text').textContent;navigator.clipboard.writeText(t);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);}
+function copyMsg(btn){const t=btn.closest('.msg-body').querySelector('.msg-text').textContent;navigator.clipboard.writeText(t);btn.textContent='РЎРєРѕРїРёСЂРѕРІР°РЅРѕ!';setTimeout(()=>btn.textContent='РљРѕРїРёСЂРѕРІР°С‚СЊ',2000);}
 function useSug(el){document.getElementById('chatInput').value=el.textContent;send();}
 function attachImg(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>showImg(ev.target.result);r.readAsDataURL(f)};i.click();}
-function showImg(url){pendingImg=url;const w=document.getElementById('imgPreview');w.style.display='flex';w.innerHTML='<img src="'+url+'"><button onclick="clearImg()">x</button><span style="font-size:11px;color:var(--text3)">Image attached</span>';}
+function showImg(url){pendingImg=url;const w=document.getElementById('imgPreview');w.style.display='flex';w.innerHTML='<img src="'+url+'"><button onclick="clearImg()">x</button><span style="font-size:11px;color:var(--text3)">РР·РѕР±СЂР°Р¶РµРЅРёРµ РїСЂРёРєСЂРµРїР»РµРЅРѕ</span>';}
 function clearImg(){pendingImg=null;const w=document.getElementById('imgPreview');w.style.display='none';w.innerHTML='';}
 document.addEventListener('paste',e=>{const items=e.clipboardData?.items;if(!items)return;for(const item of items)if(item.type.startsWith('image/')){const f=item.getAsFile();const r=new FileReader();r.onload=ev=>showImg(ev.target.result);r.readAsDataURL(f);break;}});
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
