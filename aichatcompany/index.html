@@ -70,6 +70,8 @@
                 <div class="chat-topbar-title" id="chat-title">AI Chat Pro</div>
                 <select id="model-select" onchange="switchModel(this.value)" style="font-size:0.75em;color:#6e6e80;background:#f7f7f8;border:1px solid #e5e5e5;border-radius:8px;padding:3px 8px;cursor:pointer;outline:none;font-family:inherit;">
                     <option value="pro">✨ AI Chat Pro</option>
+                    <option value="llama33">🦙 Llama 3.3 70B</option>
+                    <option value="llama4">🦙 Llama 4 Scout</option>
                     <option value="roast">🔥 AI Roast [18+]</option>
                 </select>
             </div>
@@ -239,12 +241,20 @@ getGroqKey();
 
 // Send via server proxy with streaming
 async function callAI(messages, temperature, onChunk) {
+  const modelMap = {
+    'pro': 'llama-3.3-70b-versatile',
+    'llama33': 'llama-3.3-70b-versatile',
+    'llama4': 'meta-llama/llama-4-scout-17b-16e-instruct',
+    'roast': 'llama-3.3-70b-versatile'
+  };
+  const selectedModel = modelMap[currentModel] || 'llama-3.3-70b-versatile';
+
   const res = await fetch('/api/chat', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: selectedModel,
       messages,
       max_tokens: 800,
       temperature: temperature || 0.7,
@@ -426,7 +436,6 @@ async function saveAIMessage(text) {
 
 function switchModel(val) {
     if (val === 'roast' && currentModel !== 'roast') {
-        // Show warning modal
         showWarning(() => {
             currentModel = 'roast';
             history = [];
@@ -439,6 +448,24 @@ function switchModel(val) {
         }, () => {
             document.getElementById('model-select').value = 'pro';
         });
+    } else if (val === 'llama33') {
+        currentModel = 'llama33';
+        history = [];
+        document.getElementById('chat-title').textContent = '🦙 Llama 3.3 70B';
+        document.getElementById('chat-messages').innerHTML = `
+            <div class="chat-msg ai">
+                <div class="chat-avatar ai" style="background:#7c3aed">🦙</div>
+                <div class="chat-bubble">Hi! I'm Llama 3.3 70B by Meta — one of the most powerful open-source models. Ask me anything!</div>
+            </div>`;
+    } else if (val === 'llama4') {
+        currentModel = 'llama4';
+        history = [];
+        document.getElementById('chat-title').textContent = '🦙 Llama 4 Scout';
+        document.getElementById('chat-messages').innerHTML = `
+            <div class="chat-msg ai">
+                <div class="chat-avatar ai" style="background:#0ea5e9">🦙</div>
+                <div class="chat-bubble">Hey! I'm Llama 4 Scout — Meta's latest model with multimodal capabilities. Try sending me an image!</div>
+            </div>`;
     } else if (val === 'pro') {
         currentModel = 'pro';
         history = [];
