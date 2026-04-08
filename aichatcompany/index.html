@@ -231,15 +231,14 @@ let _groqKey = null;
 async function getGroqKey() {
   if (_groqKey) return _groqKey;
   try {
-    const res = await fetch('/api/config/groq-key');
+    const res = await fetch('/api/config/groq-key', {credentials:'include'});
     if (res.ok) { const d = await res.json(); if (d.key) { _groqKey = d.key; return _groqKey; } }
   } catch (_) {}
   return null;
 }
-// Pre-load on page start
 getGroqKey();
 
-// Send via server proxy with streaming
+// Прямой вызов Groq API (без авторизации для демо)
 async function callAI(messages, temperature, onChunk) {
   const modelMap = {
     'pro': 'llama-3.3-70b-versatile',
@@ -248,18 +247,43 @@ async function callAI(messages, temperature, onChunk) {
     'roast': 'llama-3.3-70b-versatile'
   };
   const selectedModel = modelMap[currentModel] || 'llama-3.3-70b-versatile';
+  const key = await getGroqKey();
 
+  // Если есть Groq ключ — идём напрямую
+  if (key) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ model: selectedModel, messages, max_tokens: 800, temperature: temperature || 0.7, stream: !!onChunk })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    if (onChunk) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value).split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          const json = line.slice(6);
+          if (json === '[DONE]') continue;
+          try { const d = JSON.parse(json); const chunk = d.choices?.[0]?.delta?.content||''; if(chunk){full+=chunk;onChunk(chunk,full);} } catch(_){}
+        }
+      }
+      return full;
+    }
+    return res.json();
+  }
+
+  // Fallback — через сервер
   const res = await fetch('/api/chat', {
-    method: 'POST',
-    credentials: 'include',
+    method: 'POST', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: selectedModel,
-      messages,
-      max_tokens: 800,
-      temperature: temperature || 0.7,
-      stream: !!onChunk
-    })
+    body: JSON.stringify({ model: selectedModel, messages, max_tokens: 800, temperature: temperature || 0.7 })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -267,30 +291,6 @@ async function callAI(messages, temperature, onChunk) {
     if (err.error === 'no_credits') throw new Error('no_credits');
     throw new Error(err.error || `HTTP ${res.status}`);
   }
-
-  if (onChunk) {
-    // Streaming
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let full = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const text = decoder.decode(value);
-      const lines = text.split('\n').filter(l => l.startsWith('data: '));
-      for (const line of lines) {
-        const json = line.slice(6);
-        if (json === '[DONE]') continue;
-        try {
-          const d = JSON.parse(json);
-          const chunk = d.choices?.[0]?.delta?.content || '';
-          if (chunk) { full += chunk; onChunk(chunk, full); }
-        } catch(_) {}
-      }
-    }
-    return full;
-  }
-
   return res.json();
 }
 

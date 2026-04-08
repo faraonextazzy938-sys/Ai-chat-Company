@@ -336,8 +336,7 @@ def upgrade_plan(user):
 # ── Chat ──────────────────────────────────────────────────────
 
 @app.route('/api/config/groq-key')
-@login_required
-def get_groq_key(user):
+def get_groq_key():
     key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
     if not key: return jsonify({'error': 'GROQ key not configured'}), 503
     return jsonify({'key': key})
