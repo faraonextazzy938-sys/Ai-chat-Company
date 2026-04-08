@@ -472,73 +472,30 @@ def proxy_chat(user):
                     # Fall through to backup bot instead of returning error
             except Exception as e:
                 app.logger.warning(f'Claude error: {e}')
-                # Fall through to backup bot
 
-        # ── Simple Rule-Based Bot (always works) ─────────────
-        # Extract last user message
-        last_msg = ""
-        for m in reversed(messages):
-            if m.get('role') == 'user':
-                content = m.get('content', '')
-                if isinstance(content, str):
-                    last_msg = content.lower()
-                    break
-        
-        # Simple responses with better matching
-        if any(word in last_msg for word in ['привет', 'hello', 'hi', 'здравствуй', 'добрый день', 'hey']):
-            response = "Привет! Я AI Chat Pro, созданный AI Chat Company. Чем могу помочь? 🤖"
-        elif any(word in last_msg for word in ['как дела', 'how are you', 'как ты']):
-            response = "Отлично, спасибо! Готов помочь с любыми вопросами. Что вас интересует?"
-        elif any(word in last_msg for word in ['что ты умеешь', 'what can you do', 'твои возможности', 'помощь']):
-            response = "Я могу помочь с:\n\n✅ Ответами на вопросы\n✅ Написанием и объяснением кода\n✅ Решением задач\n✅ Переводом текста\n✅ Генерацией идей\n\nЗадавайте любые вопросы!"
-        elif any(word in last_msg for word in ['код', 'code', 'программ', 'python', 'javascript', 'java']):
-            response = "Конечно! Я помогу с кодом. Какой язык программирования вас интересует? (Python, JavaScript, Java, C++, и другие)"
-        elif any(word in last_msg for word in ['спасибо', 'thanks', 'thank you', 'благодарю']):
-            response = "Пожалуйста! Рад помочь. Если есть ещё вопросы - обращайтесь! 😊"
-        elif any(word in last_msg for word in ['кто ты', 'who are you', 'что ты такое']):
-            response = "Я AI Chat Pro — AI-ассистент от AI Chat Company. Использую модель Mistral 7B для ответов на ваши вопросы. Создан чтобы помогать с информацией, кодом и решением задач!"
-        elif any(word in last_msg for word in ['пока', 'bye', 'goodbye', 'до свидания']):
-            response = "До встречи! Возвращайтесь, если понадобится помощь. Удачи! 👋"
-        else:
-            # Try HuggingFace first
+        # ── Groq (Llama) ──────────────────────────────────────
+        if groq_key:
             try:
-                prompt = ""
-                for m in messages:
-                    role = m.get('role', 'user')
-                    content = m.get('content', '')
-                    if isinstance(content, str):
-                        if role == 'system':
-                            prompt += f"System: {content}\n\n"
-                        elif role == 'user':
-                            prompt += f"User: {content}\n\n"
-                        elif role == 'assistant':
-                            prompt += f"Assistant: {content}\n\n"
-                prompt += "Assistant:"
-
-                hf_resp = requests.post(
-                    'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
-                    headers={'Content-Type': 'application/json'},
-                    json={'inputs': prompt, 'parameters': {'max_new_tokens': 512, 'temperature': 0.7, 'return_full_text': False}},
-                    timeout=15
+                groq_messages = [m for m in messages if isinstance(m.get('content'), str)]
+                groq_resp = requests.post(
+                    'https://api.groq.com/openai/v1/chat/completions',
+                    headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
+                    json={'model': data.get('model', 'llama-3.3-70b-versatile'), 'messages': groq_messages, 'max_tokens': 2048, 'temperature': 0.9},
+                    timeout=30
                 )
-                if hf_resp.ok:
-                    result = hf_resp.json()
-                    if isinstance(result, list) and len(result) > 0:
-                        text = result[0].get('generated_text', '').strip()
-                        if text and len(text) > 10:
-                            response = text
-                        else:
-                            response = f"Понял ваш вопрос про '{last_msg[:50]}...'. Это интересная тема! К сожалению, сейчас не могу дать развёрнутый ответ, но могу помочь с базовой информацией."
-                    else:
-                        response = "Интересный вопрос! Давайте разберём его подробнее. Что именно вас интересует?"
+                if groq_resp.ok:
+                    result = groq_resp.json()
+                    text = result['choices'][0]['message']['content']
+                    deduct()
+                    return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
+                                    'credits_remaining': max(0, total - 1) if total >= 0 else -1})
                 else:
-                    response = "Понял вас! Это хороший вопрос. Могу помочь с дополнительной информацией - уточните, что именно вас интересует?"
+                    app.logger.warning(f'Groq error: {groq_resp.status_code} - {groq_resp.text}')
             except Exception as e:
-                app.logger.warning(f'HuggingFace error: {e}')
-                response = "Спасибо за вопрос! Я обрабатываю информацию. Можете переформулировать или задать более конкретный вопрос?"
-        
+                app.logger.warning(f'Groq error: {e}')
+
         deduct()
-        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': response}}],
+        return jsonify({'choices': [{'message': {'role': 'assistant', 'content': 'AI временно недоступен. Попробуйте позже.'}}],
                         'credits_remaining': max(0, total - 1) if total >= 0 else -1})
 
     except Exception as e:
