@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat — AI Chat Company</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body style="background:#0d0d0d; overflow:hidden;">
+
+<!-- Auth Gate Overlay -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-card-icon">🔐</div>
+    <div class="auth-card-title">Sign in to chat</div>
+    <p class="auth-card-sub">Create a free account to start chatting with AI. Get 50 credits instantly — no credit card needed.</p>
+    <div class="auth-card-actions">
+      <a href="/login.html" class="btn-primary" style="justify-content:center;">Sign in / Register</a>
+      <a href="/" class="btn-ghost" style="justify-content:center; border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);">Back to Home</a>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- Chat Layout -->
+<div class="chat-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">💬</div>
+      <span class="sb-title">AI Chat Co.</span>
+      <a href="/" class="sb-home-link" title="Home">🏠</a>
+    </div>
+
+    <button class="new-chat-btn" onclick="newChat()">
+      <span class="new-chat-btn-icon">✏️</span>
+      New chat
+    </button>
+
+    <div class="chats-list" id="chats-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="sb-bottom">
+      <div class="user-row" id="user-row" onclick="window.location='/profile.html'">
+        <div class="user-av" id="user-av">👤</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Loading...</div>
+          <div class="user-credits" id="user-credits">
+            <span class="user-credits-dot"></span>
+            <span id="user-credits-text">— credits</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <button class="sb-toggle-btn" id="sb-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
+      <span class="topbar-title" id="chat-title">New conversation</span>
+      <select class="model-sel" id="model-sel" title="Select AI model">
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+        <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        <option value="gemma2-9b-it">Gemma2 9B</option>
+        <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
+      </select>
+      <button class="icon-btn" onclick="clearChat()" title="Clear chat">🗑️</button>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages" id="messages">
+      <!-- Empty state -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-state-icon">🤖</div>
+        <div class="empty-state-title">How can I help you?</div>
+        <p class="empty-state-sub">Ask me anything — I can write code, explain concepts, analyze data, or just have a conversation.</p>
+        <div class="suggestions">
+          <button class="sug" onclick="useSuggestion(this)">✍️ Write a short story</button>
+          <button class="sug" onclick="useSuggestion(this)">💻 Explain async/await in JS</button>
+          <button class="sug" onclick="useSuggestion(this)">📊 Analyze this data for me</button>
+          <button class="sug" onclick="useSuggestion(this)">🐛 Help me debug my code</button>
+          <button class="sug" onclick="useSuggestion(this)">🌍 Translate to Spanish</button>
+          <button class="sug" onclick="useSuggestion(this)">📝 Summarize a long text</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="img-preview" id="img-preview"></div>
+      <div class="input-box">
+        <div class="input-top">
+          <button class="attach-btn" onclick="triggerAttach()" title="Attach image">📎</button>
+          <textarea class="chat-input" id="chat-input"
+            placeholder="Message AI Chat Co. (Enter to send, Shift+Enter for new line)"
+            rows="1" autocomplete="off"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-bottom">
+          <span class="input-hint"><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</span>
+          <span id="credits-display" style="font-size:11px; color:rgba(255,255,255,0.25);"></span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFileAttach(event)">
+    </div>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+// ── Constants ──────────────────────────────────────────────────────────
+const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
+const CHATS_KEY = 'aichat_chats';
+const ACTIVE_KEY = 'aichat_active';
+
+// Smart agent system prompts
+const AGENTS = {
+  coder: {
+    name: '💻 Coder',
+    prompt: 'You are an expert software engineer. Provide clean, well-commented code with explanations. Use markdown code blocks with language tags. Focus on best practices, performance, and readability.'
+  },
+  writer: {
+    name: '✍️ Writer',
+    prompt: 'You are a skilled creative writer and editor. Help with writing, editing, storytelling, and content creation. Be creative, engaging, and adapt your style to the user\'s needs.'
+  },
+  analyst: {
+    name: '📊 Analyst',
+    prompt: 'You are a data analyst and business intelligence expert. Help analyze data, identify patterns, create insights, and provide actionable recommendations. Be precise and data-driven.'
+  },
+  teacher: {
+    name: '👨‍🏫 Teacher',
+    prompt: 'You are a patient, knowledgeable teacher. Explain concepts clearly with examples, analogies, and step-by-step breakdowns. Adapt your explanations to the learner\'s level.'
+  },
+  default: {
+    name: '🤖 Assistant',
+    prompt: 'You are a helpful, knowledgeable AI assistant. Be concise, accurate, and friendly. Use markdown formatting for code, lists, and structure when helpful.'
+  }
+};
+
+// ── State ──────────────────────────────────────────────────────────────
+let groqKey = null;
+let currentUser = null;
+let chats = {};
+let activeChatId = null;
+let isTyping = false;
+let attachedImages = [];
+let currentAgent = 'default';
+
+// ── Init ───────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  loadChats();
+  setupInput();
+  await checkAuth();
+  await loadGroqKey();
+  renderChatsList();
+  restoreActiveChat();
+});
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (!res.ok) {
+      document.getElementById('auth-gate').style.display = 'flex';
+      return;
+    }
+    currentUser = await res.json();
+    document.getElementById('auth-gate').style.display = 'none';
+    updateUserUI();
+  } catch (e) {
+    document.getElementById('auth-gate').style.display = 'flex';
+  }
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const av = document.getElementById('user-av');
+  const name = document.getElementById('user-name');
+  const credits = document.getElementById('user-credits-text');
+  const display = document.getElementById('credits-display');
+
+  if (av) av.textContent = currentUser.nomchat_avatar || '👤';
+  if (name) name.textContent = currentUser.username || currentUser.email;
+
+  const total = currentUser.total_credits === -1 ? '∞' : currentUser.total_credits;
+  if (credits) credits.textContent = `${total} credits`;
+  if (display) display.textContent = `${total} credits remaining`;
+}
+
+async function loadGroqKey() {
+  try {
+    const res = await fetch('/api/config/groq-key');
+    if (res.ok) {
+      const data = await res.json();
+      groqKey = data.key;
+    }
+  } catch (e) {}
+}
+
+// ── Chat Storage ───────────────────────────────────────────────────────
+function loadChats() {
+  try {
+    const saved = localStorage.getItem(CHATS_KEY);
+    chats = saved ? JSON.parse(saved) : {};
+  } catch (e) { chats = {}; }
+}
+
+function saveChats() {
+  try { localStorage.setItem(CHATS_KEY, JSON.stringify(chats)); } catch (e) {}
+}
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function newChat(agentKey = 'default') {
+  const id = generateId();
+  chats[id] = {
+    id, title: 'New conversation',
+    messages: [], agent: agentKey,
+    created: Date.now(), updated: Date.now()
+  };
+  saveChats();
+  setActiveChat(id);
+  renderChatsList();
+  document.getElementById('chat-input')?.focus();
+}
+
+function setActiveChat(id) {
+  activeChatId = id;
+  localStorage.setItem(ACTIVE_KEY, id);
+  currentAgent = chats[id]?.agent || 'default';
+  renderMessages();
+  updateChatTitle();
+  renderChatsList();
+}
+
+function restoreActiveChat() {
+  const saved = localStorage.getItem(ACTIVE_KEY);
+  if (saved && chats[saved]) {
+    setActiveChat(saved);
+  } else {
+    const ids = Object.keys(chats).sort((a, b) => (chats[b].updated || 0) - (chats[a].updated || 0));
+    if (ids.length) setActiveChat(ids[0]);
+    else newChat();
+  }
+}
+
+function deleteChat(id, e) {
+  e?.stopPropagation();
+  delete chats[id];
+  saveChats();
+  if (activeChatId === id) {
+    const ids = Object.keys(chats);
+    if (ids.length) setActiveChat(ids[0]);
+    else newChat();
+  }
+  renderChatsList();
+}
+
+function clearChat() {
+  if (!activeChatId || !chats[activeChatId]) return;
+  chats[activeChatId].messages = [];
+  chats[activeChatId].title = 'New conversation';
+  saveChats();
+  renderMessages();
+  updateChatTitle();
+}
+
+function updateChatTitle() {
+  const chat = chats[activeChatId];
+  const title = chat?.title || 'New conversation';
+  const el = document.getElementById('chat-title');
+  if (el) el.textContent = title;
+}
+
+// ── Render Sidebar ─────────────────────────────────────────────────────
+function renderChatsList() {
+  const list = document.getElementById('chats-list');
+  if (!list) return;
+
+  const sorted = Object.values(chats).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+
+  if (!sorted.length) {
+    list.innerHTML = '<p style="font-size:12px; color:rgba(255,255,255,0.2); padding:12px 16px;">No conversations yet</p>';
+    return;
+  }
+
+  list.innerHTML = sorted.map(chat => `
+    <div class="chat-item ${chat.id === activeChatId ? 'active' : ''}"
+      onclick="setActiveChat('${chat.id}')">
+      <span class="chat-item-icon">${AGENTS[chat.agent || 'default']?.name?.split(' ')[0] || '💬'}</span>
+      <span class="chat-item-title">${escHtml(chat.title)}</span>
+      <button class="chat-del" onclick="deleteChat('${chat.id}', event)" title="Delete chat">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── Render Messages ────────────────────────────────────────────────────
+function renderMessages() {
+  const container = document.getElementById('messages');
+  if (!container) return;
+
+  const chat = chats[activeChatId];
+  if (!chat || !chat.messages.length) {
+    container.innerHTML = `
+      <div class="empty-state" id="empty-state">
+        <div class="empty-state-icon">🤖</div>
+        <div class="empty-state-title">How can I help you?</div>
+        <p class="empty-state-sub">Ask me anything — I can write code, explain concepts, analyze data, or just have a conversation.</p>
+        <div class="suggestions">
+          <button class="sug" onclick="useSuggestion(this)">✍️ Write a short story</button>
+          <button class="sug" onclick="useSuggestion(this)">💻 Explain async/await in JS</button>
+          <button class="sug" onclick="useSuggestion(this)">📊 Analyze this data for me</button>
+          <button class="sug" onclick="useSuggestion(this)">🐛 Help me debug my code</button>
+          <button class="sug" onclick="useSuggestion(this)">🌍 Translate to Spanish</button>
+          <button class="sug" onclick="useSuggestion(this)">📝 Summarize a long text</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = chat.messages.map((msg, i) => renderMsgHTML(msg, i)).join('');
+  scrollToBottom();
+}
+
+function renderMsgHTML(msg, idx) {
+  const isUser = msg.role === 'user';
+  const av = isUser ? (currentUser?.nomchat_avatar || '👤') : '🤖';
+  const name = isUser ? (currentUser?.username || 'You') : (AGENTS[currentAgent]?.name || 'AI');
+  const body = isUser ? escHtml(msg.content) : renderMarkdown(msg.content);
+
+  return `
+    <div class="msg-row ${isUser ? 'user' : 'ai'}" data-idx="${idx}">
+      <div class="msg-av">${av}</div>
+      <div class="msg-inner">
+        <div class="msg-name">${escHtml(name)}</div>
+        <div class="msg-body">
+          <div class="msg-text">${body}</div>
+        </div>
+        <div class="msg-actions">
+          <button class="msg-act-btn" onclick="copyMsg(${idx})">📋 Copy</button>
+          ${!isUser ? `<button class="msg-act-btn" onclick="regenerate(${idx})">🔄 Regenerate</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Markdown Renderer ──────────────────────────────────────────────────
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = escHtml(text);
+
+  // Code blocks
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const l = lang || 'code';
+    return `<div class="code-block-header"><span>${l}</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code class="language-${l}">${code.trim()}</code></pre>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold & italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Unordered lists
+  html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+  // Ordered lists
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+  // Paragraphs (double newlines)
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  html = `<p>${html}</p>`;
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<p>(<h[1-3]>)/g, '$1');
+  html = html.replace(/(<\/h[1-3]>)<\/p>/g, '$1');
+  html = html.replace(/<p>(<ul>)/g, '$1');
+  html = html.replace(/(<\/ul>)<\/p>/g, '$1');
+  html = html.replace(/<p>(<div class="code)/g, '$1');
+  html = html.replace(/(<\/pre>)<\/p>/g, '$1');
+
+  return html;
+}
+
+// ── Send Message ───────────────────────────────────────────────────────
+async function sendMessage() {
+  if (isTyping) return;
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+
+  const text = input.value.trim();
+  if (!text && !attachedImages.length) return;
+
+  if (!activeChatId || !chats[activeChatId]) newChat();
+
+  const chat = chats[activeChatId];
+
+  // Build content (text + images)
+  let content = text;
+  if (attachedImages.length) {
+    content = [
+      { type: 'text', text: text || 'What do you see in this image?' },
+      ...attachedImages.map(img => ({ type: 'image_url', image_url: { url: img } }))
+    ];
+  }
+
+  // Add user message
+  chat.messages.push({ role: 'user', content: typeof content === 'string' ? content : text });
+  chat.updated = Date.now();
+
+  // Auto-title from first message
+  if (chat.messages.length === 1 && text) {
+    chat.title = text.slice(0, 40) + (text.length > 40 ? '…' : '');
+  }
+
+  // Auto-detect agent
+  if (chat.messages.length === 1) {
+    currentAgent = detectAgent(text);
+    chat.agent = currentAgent;
+  }
+
+  saveChats();
+  input.value = '';
+  autoResize(input);
+  clearAttachments();
+  renderMessages();
+  updateChatTitle();
+  renderChatsList();
+
+  // Show typing
+  isTyping = true;
+  document.getElementById('send-btn').disabled = true;
+  showTypingIndicator();
+
+  try {
+    const messages = buildMessages(chat);
+    let reply = '';
+
+    if (groqKey) {
+      reply = await streamGroq(chat, messages);
+    } else {
+      reply = await serverChat(messages);
+    }
+
+    removeTypingIndicator();
+    chat.messages.push({ role: 'assistant', content: reply });
+    chat.updated = Date.now();
+    saveChats();
+    renderMessages();
+    renderChatsList();
+
+    // Update credits
+    if (currentUser) {
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'include' });
+        if (r.ok) { currentUser = await r.json(); updateUserUI(); }
+      } catch (e) {}
+    }
+
+  } catch (err) {
+    removeTypingIndicator();
+    appendErrorMsg(getErrMsg(err));
+  } finally {
+    isTyping = false;
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+  }
+}
+
+function buildMessages(chat) {
+  const agent = AGENTS[chat.agent || 'default'] || AGENTS.default;
+  const system = { role: 'system', content: agent.prompt };
+  const history = chat.messages.slice(-20).map(m => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: typeof m.content === 'string' ? m.content : (m.content[0]?.text || '')
+  }));
+  return [system, ...history];
+}
+
+async function streamGroq(chat, messages) {
+  const model = document.getElementById('model-sel')?.value || 'llama-3.3-70b-versatile';
+  const res = await fetch(GROQ_API, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, max_tokens: 2048, temperature: 0.8, stream: true })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Groq error ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+
+  // Create streaming message element
+  removeTypingIndicator();
+  const container = document.getElementById('messages');
+  const msgEl = document.createElement('div');
+  msgEl.className = 'msg-row ai streaming';
+  msgEl.innerHTML = `
+    <div class="msg-av">🤖</div>
+    <div class="msg-inner">
+      <div class="msg-name">${escHtml(AGENTS[currentAgent]?.name || 'AI')}</div>
+      <div class="msg-body"><div class="msg-text"></div></div>
+    </div>`;
+  container.appendChild(msgEl);
+  const textEl = msgEl.querySelector('.msg-text');
+  scrollToBottom();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    for (const line of chunk.split('\n')) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') break;
+      try {
+        const parsed = JSON.parse(data);
+        const delta = parsed.choices?.[0]?.delta?.content || '';
+        if (delta) {
+          fullText += delta;
+          textEl.innerHTML = renderMarkdown(fullText);
+          scrollToBottom();
+        }
+      } catch (e) {}
+    }
+  }
+
+  msgEl.remove();
+  return fullText;
+}
+
+async function serverChat(messages) {
+  const model = document.getElementById('model-sel')?.value || 'llama-3.3-70b-versatile';
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ model, messages })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    if (err.error === 'no_credits') throw new Error('No credits remaining. Please upgrade your plan.');
+    if (err.error === 'Unauthorized') throw new Error('Session expired. Please sign in again.');
+    throw new Error(err.error || `Server error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || 'No response.';
+}
+
+// ── Agent Detection ────────────────────────────────────────────────────
+function detectAgent(text) {
+  const t = text.toLowerCase();
+  if (/\b(code|function|class|bug|error|debug|javascript|python|typescript|html|css|api|sql|algorithm)\b/.test(t)) return 'coder';
+  if (/\b(write|story|essay|poem|blog|article|creative|edit|proofread|grammar)\b/.test(t)) return 'writer';
+  if (/\b(analyze|data|chart|statistics|trend|report|metrics|insights|business)\b/.test(t)) return 'analyst';
+  if (/\b(explain|teach|learn|understand|how does|what is|why does|tutorial|lesson)\b/.test(t)) return 'teacher';
+  return 'default';
+}
+
+// ── Typing Indicator ───────────────────────────────────────────────────
+function showTypingIndicator() {
+  const container = document.getElementById('messages');
+  const empty = document.getElementById('empty-state');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'typing-row';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="msg-av">🤖</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function removeTypingIndicator() {
+  document.getElementById('typing-indicator')?.remove();
+}
+
+function appendErrorMsg(msg) {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg-row ai';
+  div.innerHTML = `
+    <div class="msg-av">⚠️</div>
+    <div class="msg-inner">
+      <div class="msg-body" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.08);">
+        <div class="msg-text" style="color:#fca5a5;">${escHtml(msg)}</div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+// ── Message Actions ────────────────────────────────────────────────────
+function copyMsg(idx) {
+  const chat = chats[activeChatId];
+  if (!chat) return;
+  const msg = chat.messages[idx];
+  if (!msg) return;
+  const text = typeof msg.content === 'string' ? msg.content : msg.content[0]?.text || '';
+  navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block-header')?.nextElementSibling;
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+async function regenerate(idx) {
+  const chat = chats[activeChatId];
+  if (!chat || isTyping) return;
+  // Remove messages from idx onwards
+  chat.messages = chat.messages.slice(0, idx);
+  saveChats();
+  renderMessages();
+  // Re-send
+  if (chat.messages.length) {
+    const lastUser = [...chat.messages].reverse().find(m => m.role === 'user');
+    if (lastUser) {
+      isTyping = true;
+      document.getElementById('send-btn').disabled = true;
+      showTypingIndicator();
+      try {
+        const messages = buildMessages(chat);
+        const reply = groqKey ? await streamGroq(chat, messages) : await serverChat(messages);
+        removeTypingIndicator();
+        chat.messages.push({ role: 'assistant', content: reply });
+        chat.updated = Date.now();
+        saveChats();
+        renderMessages();
+      } catch (err) {
+        removeTypingIndicator();
+        appendErrorMsg(getErrMsg(err));
+      } finally {
+        isTyping = false;
+        document.getElementById('send-btn').disabled = false;
+      }
+    }
+  }
+}
+
+function useSuggestion(btn) {
+  const text = btn.textContent.replace(/^[^\s]+\s/, '');
+  const input = document.getElementById('chat-input');
+  if (input) { input.value = text; input.focus(); autoResize(input); }
+}
+
+// ── Image Attachment ───────────────────────────────────────────────────
+function triggerAttach() {
+  document.getElementById('file-input')?.click();
+}
+
+function handleFileAttach(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    attachedImages.push(ev.target.result);
+    renderAttachments();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function renderAttachments() {
+  const preview = document.getElementById('img-preview');
+  if (!preview) return;
+  preview.innerHTML = attachedImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img}" alt="Attached image">
+      <button class="img-preview-remove" onclick="removeAttachment(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeAttachment(i) {
+  attachedImages.splice(i, 1);
+  renderAttachments();
+}
+
+function clearAttachments() {
+  attachedImages = [];
+  const preview = document.getElementById('img-preview');
+  if (preview) preview.innerHTML = '';
+}
+
+// ── Input Setup ────────────────────────────────────────────────────────
+function setupInput() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  input.addEventListener('input', () => autoResize(input));
+
+  // Paste image
+  input.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          attachedImages.push(ev.target.result);
+          renderAttachments();
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  });
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sb-overlay');
+  const open = sb.classList.toggle('open');
+  overlay.classList.toggle('open', open);
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sb-overlay')?.classList.remove('open');
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────
+function scrollToBottom() {
+  const c = document.getElementById('messages');
+  if (c) c.scrollTop = c.scrollHeight;
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getErrMsg(err) {
+  const m = err?.message || String(err);
+  if (m.includes('Failed to fetch') || m.includes('NetworkError')) return 'Network error. Check your connection.';
+  if (m.includes('rate_limit') || m.includes('429')) return 'Rate limit reached. Please wait a moment.';
+  return m || 'Something went wrong. Please try again.';
+}
+
+function showToast(msg, type = 'info') {
+  let c = document.querySelector('.toast-container');
+  if (!c) { c = document.createElement('div'); c.className = 'toast-container'; document.body.appendChild(c); }
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type === 'success' ? '✅' : 'ℹ️'}</span><span>${escHtml(msg)}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+</script>
+</body>
+</html>

@@ -1,50 +1,82 @@
-from flask import Flask, request, jsonify, session, send_from_directory
+"""
+AI Chat Company — Optimized Flask Server
+Features: Auth, Groq AI, Sessions, Credits, Operator, Image Gen, Voice, Preview
+"""
+from flask import Flask, request, jsonify, session, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
-import os, secrets, requests, traceback
 from werkzeug.security import generate_password_hash, check_password_hash
+import os, re, secrets, requests, traceback, json, time
 
 app = Flask(__name__, static_folder='.')
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RAILWAY_ENVIRONMENT') == 'production'
 
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///aichat.db')
-if db_url.startswith('postgres://'):
-    db_url = db_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
+# ── Config ────────────────────────────────────────────────────────────
+app.secret_key = os.environ.get('SECRET_KEY', 'aichat-dev-secret-2026')
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get('RAILWAY_ENVIRONMENT') == 'production',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+)
 
-CORS(app, supports_credentials=True, origins='*')
+_db_url = os.environ.get('DATABASE_URL', 'sqlite:///aichat.db')
+if _db_url.startswith('postgres://'):
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+_db_url = re.sub(r'[?&]channel_binding=[^&]*', '', _db_url)
+_db_url = re.sub(r'\?$|&$', '', _db_url)
+
+app.config.update(
+    SQLALCHEMY_DATABASE_URI=_db_url,
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    SQLALCHEMY_ENGINE_OPTIONS={
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'pool_size': 10,
+        'max_overflow': 20,
+    }
+)
+
+CORS(app, supports_credentials=True,
+     origins=os.environ.get('ALLOWED_ORIGINS', '*').split(','))
 db = SQLAlchemy(app)
 
-GROQ_KEY = lambda: os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+# ── Constants ─────────────────────────────────────────────────────────
+GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions'
 NOMCHAT_URL = os.environ.get('NOMCHAT_URL', 'https://nomchat-id.up.railway.app')
+OPERATOR_EMAIL = os.environ.get('OPERATOR_EMAIL', 'admin@aichat.local')
 
-# ── Models ────────────────────────────────────────────────────
+PLANS = {
+    'free':  {'credits': 50,   'bonus': 300,  'label': 'Free'},
+    'pro':   {'credits': 1000, 'bonus': 0,    'label': 'Pro'},
+    'max':   {'credits': 5000, 'bonus': 0,    'label': 'Max'},
+    'ultra': {'credits': -1,   'bonus': 0,    'label': 'Ultra'},
+}
 
+# ── Models ────────────────────────────────────────────────────────────
 class User(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    username = db.Column(db.String(80), nullable=False)
-    password_hash = db.Column(db.String(256))
-    nomchat_id = db.Column(db.String(64))
+    id             = db.Column(db.Integer, primary_key=True)
+    email          = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    username       = db.Column(db.String(80), nullable=False)
+    password_hash  = db.Column(db.String(256))
+    nomchat_id     = db.Column(db.String(64), index=True)
     nomchat_username = db.Column(db.String(80))
     nomchat_avatar = db.Column(db.String(10), default='💬')
-    credits = db.Column(db.Integer, default=50)
-    bonus_credits = db.Column(db.Integer, default=300)
-    plan = db.Column(db.String(20), default='free')
-    is_banned = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
+    credits        = db.Column(db.Integer, default=50)
+    bonus_credits  = db.Column(db.Integer, default=300)
+    plan           = db.Column(db.String(20), default='free')
+    is_banned      = db.Column(db.Boolean, default=False)
+    is_operator    = db.Column(db.Boolean, default=False)
+    created_at     = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login     = db.Column(db.DateTime)
 
-    def set_password(self, pw): self.password_hash = generate_password_hash(pw)
-    def check_password(self, pw): return self.password_hash and check_password_hash(self.password_hash, pw)
+    def set_password(self, pw):
+        self.password_hash = generate_password_hash(pw)
+
+    def check_password(self, pw):
+        return bool(self.password_hash and check_password_hash(self.password_hash, pw))
 
     def to_dict(self):
         total = -1 if self.plan == 'ultra' else (self.credits or 0) + (self.bonus_credits or 0)
@@ -55,165 +87,376 @@ class User(db.Model):
             'nomchat_id': self.nomchat_id, 'nomchat_username': self.nomchat_username,
             'nomchat_avatar': self.nomchat_avatar or '💬',
             'has_password': bool(self.password_hash),
+            'is_operator': self.is_operator or False,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
         }
 
+    def deduct(self, amount=1):
+        if self.plan == 'ultra': return
+        if (self.bonus_credits or 0) >= amount:
+            self.bonus_credits -= amount
+        elif (self.credits or 0) >= amount:
+            self.credits -= amount
+        else:
+            total = (self.bonus_credits or 0) + (self.credits or 0)
+            self.bonus_credits = 0
+            self.credits = max(0, total - amount)
+        db.session.commit()
+
+    def has_credits(self, amount=1):
+        if self.plan == 'ultra': return True
+        return ((self.credits or 0) + (self.bonus_credits or 0)) >= amount
+
+class ChatSession(db.Model):
+    __tablename__ = 'chat_sessions'
+    id          = db.Column(db.Integer, primary_key=True)
+    user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    session_key = db.Column(db.String(64), unique=True, default=lambda: secrets.token_urlsafe(24))
+    operator_on = db.Column(db.Boolean, default=False)
+    operator_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at  = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    messages    = db.relationship('ChatMessage', backref='session', lazy='dynamic',
+                                  cascade='all, delete-orphan')
+
+    def to_dict(self, include_messages=False):
+        d = {
+            'id': self.id, 'session_key': self.session_key,
+            'operator_on': self.operator_on,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_messages:
+            d['messages'] = [m.to_dict() for m in self.messages.order_by(ChatMessage.created_at)]
+        return d
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_messages'
+    id         = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('chat_sessions.id'), nullable=False, index=True)
+    role       = db.Column(db.String(20), nullable=False)  # user | ai | operator
+    content    = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'role': self.role, 'content': self.content,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+# ── DB Init ───────────────────────────────────────────────────────────
 with app.app_context():
     db.create_all()
 
-# ── Auth helpers ──────────────────────────────────────────────
+# ── Rate limiting (in-memory) ─────────────────────────────────────────
+_rate_store: dict = {}
 
+def rate_limit(key: str, max_calls: int = 10, window: int = 60) -> bool:
+    now = time.time()
+    calls = [t for t in _rate_store.get(key, []) if now - t < window]
+    if len(calls) >= max_calls:
+        return False
+    calls.append(now)
+    _rate_store[key] = calls
+    return True
+
+# ── Auth decorators ───────────────────────────────────────────────────
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         uid = session.get('user_id')
-        if not uid: return jsonify({'error': 'Unauthorized'}), 401
-        user = User.query.get(uid)
-        if not user: session.clear(); return jsonify({'error': 'Unauthorized'}), 401
-        if user.is_banned: return jsonify({'error': 'banned'}), 403
+        if not uid:
+            return jsonify({'error': 'Unauthorized'}), 401
+        user = db.session.get(User, uid)
+        if not user:
+            session.clear()
+            return jsonify({'error': 'Unauthorized'}), 401
+        if user.is_banned:
+            return jsonify({'error': 'banned'}), 403
         return f(*args, user=user, **kwargs)
     return decorated
 
-def deduct(user):
-    if user.plan == 'ultra': return
-    if (user.bonus_credits or 0) > 0: user.bonus_credits -= 1
-    elif (user.credits or 0) > 0: user.credits -= 1
-    db.session.commit()
+def operator_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        uid = session.get('user_id')
+        if not uid:
+            return jsonify({'error': 'Unauthorized'}), 401
+        user = db.session.get(User, uid)
+        if not user or (user.email != OPERATOR_EMAIL and not user.is_operator):
+            return jsonify({'error': 'Forbidden'}), 403
+        return f(*args, user=user, **kwargs)
+    return decorated
 
-# ── Static ────────────────────────────────────────────────────
-
+# ── Static files ──────────────────────────────────────────────────────
 @app.route('/')
-def index(): return send_from_directory('.', 'index.html')
+def index():
+    return send_from_directory('.', 'index.html')
 
-@app.route('/<path:f>')
-def static_files(f):
-    try: return send_from_directory('.', f)
-    except: return jsonify({'error': 'Not found'}), 404
+@app.route('/<path:filename>')
+def static_files(filename):
+    try:
+        return send_from_directory('.', filename)
+    except Exception:
+        try:
+            return send_from_directory('.', '404.html'), 404
+        except Exception:
+            return jsonify({'error': 'Not found'}), 404
 
 @app.errorhandler(404)
 def not_found(e):
-    try: return send_from_directory('.', '404.html'), 404
-    except: return jsonify({'error': 'Not found'}), 404
+    try:
+        return send_from_directory('.', '404.html'), 404
+    except Exception:
+        return jsonify({'error': 'Not found'}), 404
 
-# ── Auth ──────────────────────────────────────────────────────
+@app.errorhandler(500)
+def server_error(e):
+    app.logger.error(f'500: {e}\n{traceback.format_exc()}')
+    return jsonify({'error': 'Internal server error'}), 500
 
+# ── Auth: Register ────────────────────────────────────────────────────
 @app.route('/api/auth/register', methods=['POST'])
 def register():
+    ip = request.remote_addr
+    if not rate_limit(f'reg:{ip}', 5, 300):
+        return jsonify({'error': 'Too many requests. Try again later.'}), 429
+
     d = request.get_json(silent=True) or {}
-    email = d.get('email', '').strip().lower()
+    email    = d.get('email', '').strip().lower()
     username = d.get('username', '').strip()
     password = d.get('password', '')
-    if not email or not username or not password:
-        return jsonify({'error': 'All fields required'}), 400
-    if len(password) < 6:
-        return jsonify({'error': 'Password too short'}), 400
+
+    if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+        return jsonify({'error': 'Invalid email address'}), 400
+    if not username or len(username) < 2 or len(username) > 50:
+        return jsonify({'error': 'Username must be 2–50 characters'}), 400
+    if not password or len(password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already registered'}), 400
-    user = User(email=email, username=username, last_login=datetime.utcnow())
-    user.set_password(password)
-    db.session.add(user); db.session.commit()
-    session['user_id'] = user.id
-    return jsonify({'success': True, 'user': user.to_dict()})
 
+    try:
+        user = User(email=email, username=username, last_login=datetime.utcnow())
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        session.clear()
+        session['user_id'] = user.id
+        session.permanent = True
+        return jsonify({'success': True, 'user': user.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Register error: {e}')
+        return jsonify({'error': 'Registration failed. Please try again.'}), 500
+
+# ── Auth: Login ───────────────────────────────────────────────────────
 @app.route('/api/auth/login', methods=['POST'])
 def login():
+    ip = request.remote_addr
+    if not rate_limit(f'login:{ip}', 10, 300):
+        return jsonify({'error': 'Too many attempts. Try again later.'}), 429
+
     d = request.get_json(silent=True) or {}
-    email = d.get('email', '').strip().lower()
+    email    = d.get('email', '').strip().lower()
     password = d.get('password', '')
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password required'}), 400
+
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return jsonify({'error': 'Invalid email or password'}), 401
-    if user.is_banned: return jsonify({'error': 'banned'}), 403
-    user.last_login = datetime.utcnow(); db.session.commit()
+    if user.is_banned:
+        return jsonify({'error': 'Account banned'}), 403
+
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    session.clear()
     session['user_id'] = user.id
+    session.permanent = True
     return jsonify({'success': True, 'user': user.to_dict()})
 
+# ── Auth: Nomchat OAuth ───────────────────────────────────────────────
 @app.route('/api/auth/nomchat', methods=['POST'])
 def nomchat_auth():
     d = request.get_json(silent=True) or {}
-    token = d.get('token', '')
-    if not token: return jsonify({'error': 'Token required'}), 400
+    token = d.get('token', '').strip()
+    if not token:
+        return jsonify({'error': 'Token required'}), 400
+
     try:
-        res = requests.post(f'{NOMCHAT_URL}/api/auth/token/verify',
-                            json={'token': token, 'app_id': 'ai-chat-pro'}, timeout=5)
+        res = requests.post(
+            f'{NOMCHAT_URL}/api/auth/token/verify',
+            json={'token': token, 'app_id': 'ai-chat-pro'},
+            timeout=8
+        )
         nc = res.json()
     except Exception as e:
         return jsonify({'error': f'Nomchat unreachable: {e}'}), 503
+
     if not res.ok or not nc.get('success'):
         return jsonify({'error': nc.get('error', 'Invalid token')}), 401
+
     nc_user = nc['user']
-    user = User.query.filter_by(email=nc_user['email']).first()
-    if not user:
-        user = User(email=nc_user['email'], username=nc_user['username'],
-                    nomchat_id=nc_user['id'], nomchat_username=nc_user['username'],
-                    nomchat_avatar=nc_user.get('avatar', '💬'))
-        db.session.add(user)
-    else:
-        user.nomchat_id = nc_user['id']
-        user.nomchat_username = nc_user['username']
-        user.nomchat_avatar = nc_user.get('avatar', '💬')
-    if user.is_banned: return jsonify({'error': 'banned'}), 403
-    user.last_login = datetime.utcnow(); db.session.commit()
-    session['user_id'] = user.id
-    return jsonify({'success': True, 'user': user.to_dict()})
+    email   = nc_user.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'error': 'No email from Nomchat'}), 400
+
+    try:
+        user = User.query.filter_by(email=email).first()
+        is_new = user is None
+        if not user:
+            user = User(
+                email=email,
+                username=nc_user.get('username', email.split('@')[0]),
+                nomchat_id=str(nc_user.get('id', '')),
+                nomchat_username=nc_user.get('username', ''),
+                nomchat_avatar=nc_user.get('avatar', '💬'),
+            )
+            db.session.add(user)
+        else:
+            user.nomchat_id       = str(nc_user.get('id', ''))
+            user.nomchat_username = nc_user.get('username', user.nomchat_username)
+            user.nomchat_avatar   = nc_user.get('avatar', user.nomchat_avatar or '💬')
+
+        if user.is_banned:
+            return jsonify({'error': 'Account banned'}), 403
+
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        session.clear()
+        session['user_id'] = user.id
+        session.permanent = True
+        return jsonify({'success': True, 'user': user.to_dict(), 'is_new': is_new})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Nomchat auth error: {e}')
+        return jsonify({'error': 'Authentication failed'}), 500
 
 @app.route('/api/auth/me')
 @login_required
-def me(user): return jsonify(user.to_dict())
+def me(user):
+    return jsonify(user.to_dict())
 
 @app.route('/api/auth/logout', methods=['POST'])
-def logout(): session.clear(); return jsonify({'success': True})
+def logout():
+    session.clear()
+    return jsonify({'success': True})
 
-# ── Config ────────────────────────────────────────────────────
-
+# ── Config: Groq Key ─────────────────────────────────────────────────
 @app.route('/api/config/groq-key')
 def get_groq_key():
-    key = GROQ_KEY()
-    if not key: return jsonify({'error': 'Not configured'}), 503
+    key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not key:
+        return jsonify({'error': 'Groq not configured'}), 503
     return jsonify({'key': key})
 
-# ── Chat ──────────────────────────────────────────────────────
-
+# ── Chat: Groq proxy with streaming ──────────────────────────────────
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def chat(user):
-    if user.plan != 'ultra' and (user.credits or 0) + (user.bonus_credits or 0) <= 0:
-        return jsonify({'error': 'no_credits'}), 402
+    if not user.has_credits():
+        return jsonify({'error': 'no_credits', 'message': 'No credits remaining.'}), 402
+
+    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    if not groq_key:
+        return jsonify({'error': 'AI service not configured'}), 503
 
     d = request.get_json(silent=True) or {}
     messages = d.get('messages', [])
-    model = d.get('model', 'llama-3.3-70b-versatile')
+    model    = d.get('model', 'llama-3.3-70b-versatile')
+    stream   = d.get('stream', False)
 
-    key = GROQ_KEY()
-    if not key:
-        return jsonify({'error': 'AI not configured'}), 503
+    # Validate model
+    ALLOWED_MODELS = {
+        'llama-3.3-70b-versatile', 'llama-3.1-70b-versatile',
+        'llama-3.1-8b-instant', 'mixtral-8x7b-32768',
+        'gemma2-9b-it', 'meta-llama/llama-4-scout-17b-16e-instruct',
+    }
+    if model not in ALLOWED_MODELS:
+        model = 'llama-3.3-70b-versatile'
+
+    # Filter messages — only string content for Groq
+    clean_msgs = []
+    for m in messages:
+        role    = m.get('role', 'user')
+        content = m.get('content', '')
+        if role not in ('system', 'user', 'assistant'):
+            continue
+        if isinstance(content, str) and content.strip():
+            clean_msgs.append({'role': role, 'content': content.strip()})
+        elif isinstance(content, list):
+            # multimodal — keep as-is for vision models
+            clean_msgs.append({'role': role, 'content': content})
+
+    if not clean_msgs:
+        return jsonify({'error': 'No messages provided'}), 400
+
+    payload = {
+        'model': model,
+        'messages': clean_msgs,
+        'max_tokens': 2048,
+        'temperature': 0.9,
+        'stream': stream,
+    }
+
+    headers = {
+        'Authorization': f'Bearer {groq_key}',
+        'Content-Type': 'application/json',
+    }
 
     try:
-        groq_msgs = [m for m in messages if isinstance(m.get('content'), str)]
-        r = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
-            json={'model': model, 'messages': groq_msgs, 'max_tokens': 2048, 'temperature': 0.9},
-            timeout=30
-        )
-        if r.ok:
-            text = r.json()['choices'][0]['message']['content']
-            deduct(user)
-            total = -1 if user.plan == 'ultra' else (user.credits or 0) + (user.bonus_credits or 0)
-            return jsonify({'choices': [{'message': {'role': 'assistant', 'content': text}}],
-                            'credits_remaining': total})
+        if stream:
+            # Streaming response
+            def generate():
+                with requests.post(GROQ_URL, headers=headers, json=payload,
+                                   stream=True, timeout=60) as r:
+                    if not r.ok:
+                        err = r.json().get('error', {})
+                        yield f"data: {json.dumps({'error': err.get('message', 'Groq error')})}\n\n"
+                        return
+                    for line in r.iter_lines():
+                        if line:
+                            yield line.decode('utf-8') + '\n\n'
+                user.deduct()
+
+            return Response(
+                stream_with_context(generate()),
+                content_type='text/event-stream',
+                headers={'X-Accel-Buffering': 'no', 'Cache-Control': 'no-cache'}
+            )
         else:
-            return jsonify({'error': f'Groq error: {r.status_code}', 'detail': r.text}), 502
+            # Non-streaming
+            r = requests.post(GROQ_URL, headers=headers, json=payload, timeout=30)
+            if not r.ok:
+                err_data = r.json()
+                err_msg  = err_data.get('error', {}).get('message', f'Groq error {r.status_code}')
+                app.logger.warning(f'Groq error: {r.status_code} {err_msg}')
+                return jsonify({'error': err_msg}), r.status_code
+
+            result = r.json()
+            user.deduct()
+            total = -1 if user.plan == 'ultra' else (user.credits or 0) + (user.bonus_credits or 0)
+            result['credits_remaining'] = total
+            return jsonify(result)
+
+    except requests.Timeout:
+        return jsonify({'error': 'AI request timed out. Please try again.'}), 504
     except Exception as e:
+        app.logger.error(f'Chat error: {e}')
         return jsonify({'error': str(e)}), 500
 
-# ── User ──────────────────────────────────────────────────────
-
+# ── User: Update / Delete ─────────────────────────────────────────────
 @app.route('/api/user/update', methods=['POST'])
 @login_required
 def update_user(user):
     d = request.get_json(silent=True) or {}
-    if 'username' in d and 2 <= len(d['username'].strip()) <= 50:
-        user.username = d['username'].strip()
+    if 'username' in d:
+        name = d['username'].strip()
+        if 2 <= len(name) <= 50:
+            user.username = name
     if 'password' in d and len(d['password']) >= 6:
         user.set_password(d['password'])
     db.session.commit()
@@ -222,9 +465,236 @@ def update_user(user):
 @app.route('/api/user/delete', methods=['DELETE'])
 @login_required
 def delete_user(user):
-    db.session.delete(user); db.session.commit(); session.clear()
+    db.session.delete(user)
+    db.session.commit()
+    session.clear()
     return jsonify({'success': True})
 
+# ── Plans ─────────────────────────────────────────────────────────────
+@app.route('/api/plans')
+def get_plans():
+    return jsonify(PLANS)
+
+# ── Chat Sessions (operator) ──────────────────────────────────────────
+@app.route('/api/session/get', methods=['POST'])
+@login_required
+def get_session(user):
+    sess = ChatSession.query.filter_by(user_id=user.id)\
+               .order_by(ChatSession.created_at.desc()).first()
+    if not sess:
+        sess = ChatSession(user_id=user.id)
+        db.session.add(sess)
+        db.session.commit()
+    return jsonify(sess.to_dict(include_messages=True))
+
+@app.route('/api/session/message', methods=['POST'])
+@login_required
+def save_message(user):
+    d       = request.get_json(silent=True) or {}
+    content = d.get('content', '').strip()
+    role    = d.get('role', 'user')
+    if not content:
+        return jsonify({'error': 'Empty message'}), 400
+    if role not in ('user', 'ai'):
+        return jsonify({'error': 'Invalid role'}), 400
+
+    sess = ChatSession.query.filter_by(user_id=user.id)\
+               .order_by(ChatSession.created_at.desc()).first()
+    if not sess:
+        sess = ChatSession(user_id=user.id)
+        db.session.add(sess)
+        db.session.flush()
+
+    msg = ChatMessage(session_id=sess.id, role=role, content=content)
+    db.session.add(msg)
+    sess.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'ok': True, 'operator_on': sess.operator_on, 'message': msg.to_dict()})
+
+@app.route('/api/session/poll')
+@login_required
+def poll_session(user):
+    since_id = int(request.args.get('since', 0))
+    sess = ChatSession.query.filter_by(user_id=user.id)\
+               .order_by(ChatSession.created_at.desc()).first()
+    if not sess:
+        return jsonify({'operator_on': False, 'messages': []})
+    msgs = ChatMessage.query.filter(
+        ChatMessage.session_id == sess.id,
+        ChatMessage.id > since_id
+    ).order_by(ChatMessage.created_at).all()
+    return jsonify({
+        'operator_on': sess.operator_on,
+        'messages': [m.to_dict() for m in msgs],
+        'session_id': sess.id,
+    })
+
+# ── Operator ──────────────────────────────────────────────────────────
+@app.route('/api/operator/sessions')
+@operator_required
+def operator_sessions(user):
+    sessions = ChatSession.query.order_by(ChatSession.updated_at.desc()).limit(100).all()
+    return jsonify([s.to_dict() for s in sessions])
+
+@app.route('/api/operator/session/<int:sid>')
+@operator_required
+def operator_get_session(user, sid):
+    sess = db.session.get(ChatSession, sid)
+    if not sess: return jsonify({'error': 'Not found'}), 404
+    return jsonify(sess.to_dict(include_messages=True))
+
+@app.route('/api/operator/takeover', methods=['POST'])
+@operator_required
+def operator_takeover(user):
+    sid  = (request.get_json(silent=True) or {}).get('session_id')
+    sess = db.session.get(ChatSession, sid)
+    if not sess: return jsonify({'error': 'Not found'}), 404
+    sess.operator_on = True
+    sess.operator_id = user.id
+    db.session.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/operator/release', methods=['POST'])
+@operator_required
+def operator_release(user):
+    sid  = (request.get_json(silent=True) or {}).get('session_id')
+    sess = db.session.get(ChatSession, sid)
+    if not sess: return jsonify({'error': 'Not found'}), 404
+    sess.operator_on = False
+    sess.operator_id = None
+    db.session.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/operator/send', methods=['POST'])
+@operator_required
+def operator_send(user):
+    d       = request.get_json(silent=True) or {}
+    sid     = d.get('session_id')
+    content = d.get('content', '').strip()
+    if not content: return jsonify({'error': 'Empty'}), 400
+    sess = db.session.get(ChatSession, sid)
+    if not sess: return jsonify({'error': 'Not found'}), 404
+    msg = ChatMessage(session_id=sess.id, role='operator', content=content)
+    db.session.add(msg)
+    sess.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'ok': True, 'message': msg.to_dict()})
+
+@app.route('/api/operator/poll/<int:sid>')
+@operator_required
+def operator_poll(user, sid):
+    since_id = int(request.args.get('since', 0))
+    msgs = ChatMessage.query.filter(
+        ChatMessage.session_id == sid,
+        ChatMessage.id > since_id
+    ).order_by(ChatMessage.created_at).all()
+    return jsonify({'messages': [m.to_dict() for m in msgs]})
+
+# ── Image Generation ──────────────────────────────────────────────────
+@app.route('/api/image/generate', methods=['POST'])
+@login_required
+def generate_image(user):
+    if not user.has_credits(5):
+        return jsonify({'error': 'Need at least 5 credits for image generation'}), 402
+
+    d      = request.get_json(silent=True) or {}
+    prompt = d.get('prompt', '').strip()
+    if not prompt:
+        return jsonify({'error': 'Prompt required'}), 400
+
+    try:
+        resp = requests.post(
+            'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+            headers={'Content-Type': 'application/json'},
+            json={'inputs': prompt},
+            timeout=45
+        )
+        if resp.ok and resp.headers.get('content-type', '').startswith('image/'):
+            import base64
+            img_b64 = base64.b64encode(resp.content).decode('utf-8')
+            user.deduct(5)
+            total = -1 if user.plan == 'ultra' else (user.credits or 0) + (user.bonus_credits or 0)
+            return jsonify({
+                'success': True,
+                'image': f'data:image/png;base64,{img_b64}',
+                'credits_remaining': total,
+            })
+        return jsonify({'error': 'Image generation service unavailable. Try again later.'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── Voice Transcription ───────────────────────────────────────────────
+@app.route('/api/voice/transcribe', methods=['POST'])
+@login_required
+def transcribe_audio(user):
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file'}), 400
+
+    openai_key = os.environ.get('OPENAI_KEY', '')
+    if not openai_key:
+        return jsonify({'error': 'Voice transcription not configured'}), 503
+
+    audio_file = request.files['audio']
+    try:
+        resp = requests.post(
+            'https://api.openai.com/v1/audio/transcriptions',
+            headers={'Authorization': f'Bearer {openai_key}'},
+            files={'file': (audio_file.filename or 'audio.webm', audio_file.stream, audio_file.content_type)},
+            data={'model': 'whisper-1'},
+            timeout=30
+        )
+        if resp.ok:
+            return jsonify({'text': resp.json().get('text', '')})
+        return jsonify({'error': f'Transcription failed: {resp.status_code}'}), resp.status_code
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ── Website Preview ───────────────────────────────────────────────────
+@app.route('/api/preview/url', methods=['POST'])
+@login_required
+def preview_url(user):
+    d   = request.get_json(silent=True) or {}
+    url = d.get('url', '').strip()
+    if not url:
+        return jsonify({'error': 'URL required'}), 400
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+
+    screenshot_key = os.environ.get('SCREENSHOT_API_KEY', '')
+    if screenshot_key:
+        try:
+            resp = requests.get(
+                'https://shot.screenshotapi.net/screenshot',
+                params={'token': screenshot_key, 'url': url, 'width': 1280,
+                        'height': 720, 'output': 'json', 'file_type': 'png'},
+                timeout=30
+            )
+            if resp.ok:
+                data = resp.json()
+                return jsonify({'success': True, 'screenshot': data.get('screenshot', ''), 'url': url})
+        except Exception:
+            pass
+
+    # Fallback placeholder
+    return jsonify({
+        'success': True,
+        'screenshot': f'https://via.placeholder.com/1280x720/f7f7f8/888888?text={url[:50]}',
+        'url': url,
+        'fallback': True,
+    })
+
+# ── Health check ──────────────────────────────────────────────────────
+@app.route('/api/health')
+def health():
+    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    return jsonify({
+        'status': 'ok',
+        'groq': bool(groq_key),
+        'db': 'sqlite' if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI'] else 'postgres',
+        'timestamp': datetime.utcnow().isoformat(),
+    })
+
+# ── Run ───────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
