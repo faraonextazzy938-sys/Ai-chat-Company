@@ -468,7 +468,6 @@ async function sendMessage() {
         reply = await streamGroq(chat, messages);
       } catch (groqErr) {
         // Groq failed — fallback to server
-        app.logger && app.logger.warn && app.logger.warn(groqErr);
         removeTypingIndicator();
         showTypingIndicator();
         reply = await serverChat(messages);
