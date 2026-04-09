@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -464,7 +464,15 @@ async function sendMessage() {
     let reply = '';
 
     if (groqKey) {
-      reply = await streamGroq(chat, messages);
+      try {
+        reply = await streamGroq(chat, messages);
+      } catch (groqErr) {
+        // Groq failed — fallback to server
+        app.logger && app.logger.warn && app.logger.warn(groqErr);
+        removeTypingIndicator();
+        showTypingIndicator();
+        reply = await serverChat(messages);
+      }
     } else {
       reply = await serverChat(messages);
     }
@@ -506,14 +514,22 @@ function buildMessages(chat) {
 
 async function streamGroq(chat, messages) {
   const model = document.getElementById('model-sel')?.value || 'llama-3.3-70b-versatile';
-  const res = await fetch(GROQ_API, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, max_tokens: 2048, temperature: 0.8, stream: true })
-  });
+  
+  let res;
+  try {
+    res = await fetch(GROQ_API, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, max_tokens: 2048, temperature: 0.8, stream: true })
+    });
+  } catch (fetchErr) {
+    // CORS or network error — throw to trigger server fallback
+    throw new Error('groq_network');
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    // 401 = bad key, 429 = rate limit — throw to trigger fallback
     throw new Error(err.error?.message || `Groq error ${res.status}`);
   }
 

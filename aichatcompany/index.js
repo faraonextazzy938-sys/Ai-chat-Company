@@ -337,8 +337,15 @@ async function sendDemoMessage() {
     let reply = '';
 
     if (groqKey) {
-      // Direct Groq API call with streaming
-      reply = await callGroqStreaming(model, buildDemoMessages(), typingEl);
+      try {
+        reply = await callGroqStreaming(model, buildDemoMessages(), typingEl);
+      } catch (groqErr) {
+        // Groq failed — fallback to server
+        removeDemoTyping(typingEl);
+        const newTyping = showDemoTyping();
+        reply = await callServerChat(model, buildDemoMessages());
+        removeDemoTyping(newTyping);
+      }
     } else {
       // Fallback to server
       reply = await callServerChat(model, buildDemoMessages());
@@ -373,20 +380,16 @@ function buildDemoMessages() {
 }
 
 async function callGroqStreaming(model, messages, typingEl) {
-  const res = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${groqKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: 1024,
-      temperature: 0.8,
-      stream: true
-    })
-  });
+  let res;
+  try {
+    res = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.8, stream: true })
+    });
+  } catch (e) {
+    throw new Error('groq_network');
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -624,8 +627,8 @@ function autoResize(el) {
 // ── Error Messages ─────────────────────────────────────────────────────
 function getErrorMessage(err) {
   const msg = err?.message || String(err);
-  if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-    return 'Network error. Please check your connection.';
+  if (msg === 'groq_network' || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+    return 'AI temporarily unavailable. Please try again.';
   }
   if (msg.includes('rate_limit') || msg.includes('429')) {
     return 'Rate limit reached. Please wait a moment and try again.';
