@@ -5,6 +5,137 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat — AI Chat Company</title>
 <link rel="stylesheet" href="style.css">
+<style>
+/* ── Live Preview Panel ── */
+.preview-panel {
+  width: 0; flex-shrink: 0;
+  background: #fff;
+  border-left: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.preview-panel.open { width: 480px; }
+.preview-topbar {
+  height: 40px; padding: 0 14px;
+  background: #1a1a2e;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.preview-dots { display: flex; gap: 5px; }
+.preview-dots span { width: 10px; height: 10px; border-radius: 50%; }
+.preview-dots span:nth-child(1) { background: #ff5f57; }
+.preview-dots span:nth-child(2) { background: #febc2e; }
+.preview-dots span:nth-child(3) { background: #28c840; }
+.preview-url-bar {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  font-family: monospace; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.preview-actions { display: flex; gap: 4px; }
+.preview-action-btn {
+  width: 26px; height: 26px;
+  background: transparent; border: none;
+  color: rgba(255,255,255,0.4); font-size: 13px;
+  cursor: pointer; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.preview-action-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.preview-iframe-wrap { flex: 1; position: relative; }
+.preview-iframe {
+  width: 100%; height: 100%;
+  border: none; background: #fff;
+}
+.preview-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: #888; font-size: 14px;
+  background: #f7f7f8;
+}
+.preview-empty-icon { font-size: 40px; opacity: 0.4; }
+
+/* ── Agents sidebar strip ── */
+.agents-strip {
+  width: 52px; flex-shrink: 0;
+  background: #0d0d12;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column;
+  align-items: center; padding: 12px 0; gap: 4px;
+}
+.agent-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px; border: none;
+  background: transparent; cursor: pointer;
+  font-size: 18px; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.agent-btn:hover { background: rgba(255,255,255,0.08); }
+.agent-btn.active {
+  background: rgba(16,163,127,0.2);
+  box-shadow: 0 0 0 1.5px rgba(16,163,127,0.5);
+}
+.agent-btn-tooltip {
+  position: absolute; left: 48px; top: 50%;
+  transform: translateY(-50%);
+  background: #1a1a2e; color: #fff;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 8px; border-radius: 6px;
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity 0.15s;
+  z-index: 100;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.agent-btn:hover .agent-btn-tooltip { opacity: 1; }
+.agents-strip-divider {
+  width: 28px; height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 4px 0;
+}
+
+/* ── Preview toggle btn in topbar ── */
+.preview-toggle-btn {
+  padding: 5px 10px; border-radius: 7px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6); font-size: 12px;
+  font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all 0.15s; font-family: inherit;
+}
+.preview-toggle-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.preview-toggle-btn.active {
+  background: rgba(16,163,127,0.15);
+  border-color: rgba(16,163,127,0.4);
+  color: #10a37f;
+}
+
+/* ── Code run button in messages ── */
+.run-code-btn {
+  padding: 3px 10px; border-radius: 5px;
+  background: rgba(16,163,127,0.15);
+  border: 1px solid rgba(16,163,127,0.3);
+  color: #10a37f; font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.run-code-btn:hover { background: rgba(16,163,127,0.25); }
+
+/* ── Agent indicator in topbar ── */
+.agent-indicator {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px; color: rgba(255,255,255,0.5);
+}
+</style>
 </head>
 <body style="background:#0d0d0d; overflow:hidden;">
 
@@ -26,6 +157,35 @@
 
 <!-- Chat Layout -->
 <div class="chat-layout">
+
+  <!-- Agents Strip -->
+  <div class="agents-strip" id="agents-strip">
+    <button class="agent-btn active" id="agent-btn-default" onclick="setAgent('default')" title="Assistant">
+      🤖
+      <span class="agent-btn-tooltip">AI Assistant</span>
+    </button>
+    <button class="agent-btn" id="agent-btn-coder" onclick="setAgent('coder')" title="Coder">
+      💻
+      <span class="agent-btn-tooltip">Code Expert</span>
+    </button>
+    <button class="agent-btn" id="agent-btn-writer" onclick="setAgent('writer')" title="Writer">
+      ✍️
+      <span class="agent-btn-tooltip">Writer</span>
+    </button>
+    <button class="agent-btn" id="agent-btn-analyst" onclick="setAgent('analyst')" title="Analyst">
+      📊
+      <span class="agent-btn-tooltip">Data Analyst</span>
+    </button>
+    <button class="agent-btn" id="agent-btn-teacher" onclick="setAgent('teacher')" title="Teacher">
+      👨‍🏫
+      <span class="agent-btn-tooltip">Teacher</span>
+    </button>
+    <div class="agents-strip-divider"></div>
+    <button class="agent-btn" id="agent-btn-web" onclick="setAgent('web')" title="Web Builder">
+      🌐
+      <span class="agent-btn-tooltip">Web Builder</span>
+    </button>
+  </div>
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
@@ -64,6 +224,7 @@
     <div class="topbar">
       <button class="sb-toggle-btn" id="sb-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
       <span class="topbar-title" id="chat-title">New conversation</span>
+      <span class="agent-indicator" id="agent-indicator">🤖 AI Assistant</span>
       <select class="model-sel" id="model-sel" title="Select AI model">
         <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
         <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
@@ -72,6 +233,9 @@
         <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
       </select>
       <button class="icon-btn" onclick="clearChat()" title="Clear chat">🗑️</button>
+      <button class="preview-toggle-btn" id="preview-toggle" onclick="togglePreview()" title="Live Preview">
+        <span>⬜</span> Preview
+      </button>
     </div>
 
     <!-- Messages -->
@@ -115,6 +279,29 @@
       <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFileAttach(event)">
     </div>
   </main>
+
+  <!-- Live Preview Panel -->
+  <div class="preview-panel" id="preview-panel">
+    <div class="preview-topbar">
+      <div class="preview-dots"><span></span><span></span><span></span></div>
+      <div class="preview-url-bar" id="preview-url-bar">Live Preview</div>
+      <div class="preview-actions">
+        <button class="preview-action-btn" onclick="refreshPreview()" title="Refresh">↺</button>
+        <button class="preview-action-btn" onclick="openPreviewNewTab()" title="Open in new tab">↗</button>
+        <button class="preview-action-btn" onclick="togglePreview()" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="preview-iframe-wrap">
+      <div class="preview-empty" id="preview-empty">
+        <div class="preview-empty-icon">🌐</div>
+        <span style="text-align:center;line-height:1.6;">Ask AI to write HTML/CSS/JS<br>and click <strong>▶ Run</strong> to preview</span>
+      </div>
+      <iframe class="preview-iframe" id="preview-iframe"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+        style="display:none;"></iframe>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -219,9 +406,36 @@ Answer in the same language the user writes in.`
   }
 };
 
+// ── Web Builder Agent ─────────────────────────────────────────────────
+AGENTS.web = {
+  name: '🌐 Web Builder',
+  prompt: `You are an expert web developer and UI designer. You build complete, beautiful, working web pages.
+
+CRITICAL RULES:
+- ALWAYS output complete, self-contained HTML files with embedded CSS and JS
+- Every response with code MUST be a single complete HTML file (<!DOCTYPE html> ... </html>)
+- Make designs beautiful: use gradients, shadows, animations, modern fonts (Google Fonts)
+- Code must work immediately without any external dependencies except CDN links
+- Use modern CSS: flexbox, grid, custom properties, animations
+- Make it responsive and mobile-friendly
+- Add interactivity with JavaScript where appropriate
+- When asked to modify — output the COMPLETE updated file, not just the changes
+- Use inline SVG for icons instead of icon libraries when possible
+
+STYLE DEFAULTS:
+- Dark or light theme based on context
+- Smooth animations and transitions
+- Professional typography
+- Proper spacing and visual hierarchy
+
+After every code block, remind the user to click ▶ Run to see the preview.`
+};
+
 // ── State ──────────────────────────────────────────────────────────────
 let groqKey = null;
 let currentUser = null;
+let previewOpen = false;
+let lastHtmlCode = null;
 let chats = {};
 let activeChatId = null;
 let isTyping = false;
@@ -402,6 +616,11 @@ function renderMessages() {
   }
 
   container.innerHTML = chat.messages.map((msg, i) => renderMsgHTML(msg, i)).join('');
+  // Add Run buttons to HTML code blocks
+  container.querySelectorAll('pre code').forEach(codeEl => {
+    const lang = codeEl.className.replace('language-', '');
+    extractAndAddRunBtn(codeEl, lang);
+  });
   scrollToBottom();
 }
 
@@ -642,6 +861,11 @@ async function streamGroq(chat, messages) {
   }
 
   msgEl.remove();
+  // Auto-run if web agent and HTML detected
+  if (currentAgent === 'web' && fullText.includes('<!DOCTYPE') || fullText.includes('<html')) {
+    const match = fullText.match(/```(?:html)?\n?([\s\S]*?)```/);
+    if (match) setTimeout(() => runCode(match[1]), 300);
+  }
   return fullText;
 }
 
@@ -666,11 +890,88 @@ async function serverChat(messages) {
 // ── Agent Detection ────────────────────────────────────────────────────
 function detectAgent(text) {
   const t = text.toLowerCase();
-  if (/\b(code|function|class|bug|error|debug|javascript|python|typescript|html|css|api|sql|algorithm)\b/.test(t)) return 'coder';
-  if (/\b(write|story|essay|poem|blog|article|creative|edit|proofread|grammar)\b/.test(t)) return 'writer';
-  if (/\b(analyze|data|chart|statistics|trend|report|metrics|insights|business)\b/.test(t)) return 'analyst';
-  if (/\b(explain|teach|learn|understand|how does|what is|why does|tutorial|lesson)\b/.test(t)) return 'teacher';
+  if (/\b(сайт|website|webpage|landing|html|css|дизайн сайта|сделай сайт|создай сайт)\b/.test(t)) return 'web';
+  if (/\b(code|function|class|bug|error|debug|javascript|python|typescript|css|api|sql|algorithm|код|программ|скрипт)\b/.test(t)) return 'coder';
+  if (/\b(write|story|essay|poem|blog|article|creative|edit|proofread|grammar|напиши|текст|статья)\b/.test(t)) return 'writer';
+  if (/\b(analyze|data|chart|statistics|trend|report|metrics|insights|business|анализ|данные)\b/.test(t)) return 'analyst';
+  if (/\b(explain|teach|learn|understand|how does|what is|why does|tutorial|lesson|объясни|как работает)\b/.test(t)) return 'teacher';
   return 'default';
+}
+
+// ── Set Agent manually ─────────────────────────────────────────────────
+function setAgent(agentKey) {
+  currentAgent = agentKey;
+  if (activeChatId && chats[activeChatId]) {
+    chats[activeChatId].agent = agentKey;
+    saveChats();
+  }
+  // Update UI
+  document.querySelectorAll('.agent-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`agent-btn-${agentKey}`)?.classList.add('active');
+  // Update topbar indicator
+  const indicator = document.getElementById('agent-indicator');
+  if (indicator) indicator.textContent = AGENTS[agentKey]?.name || '🤖 AI';
+  // Auto-open preview for web agent
+  if (agentKey === 'web' && !previewOpen) togglePreview();
+}
+
+// ── Live Preview ───────────────────────────────────────────────────────
+function togglePreview() {
+  const panel = document.getElementById('preview-panel');
+  const btn   = document.getElementById('preview-toggle');
+  previewOpen = !previewOpen;
+  panel.classList.toggle('open', previewOpen);
+  btn.classList.toggle('active', previewOpen);
+  btn.innerHTML = previewOpen ? '<span>⬜</span> Preview' : '<span>⬜</span> Preview';
+}
+
+function runCode(html) {
+  lastHtmlCode = html;
+  const iframe  = document.getElementById('preview-iframe');
+  const empty   = document.getElementById('preview-empty');
+  const urlBar  = document.getElementById('preview-url-bar');
+
+  // Open preview if closed
+  if (!previewOpen) togglePreview();
+
+  iframe.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+  urlBar.textContent = 'localhost — Live Preview';
+
+  // Write HTML into iframe
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+}
+
+function refreshPreview() {
+  if (lastHtmlCode) runCode(lastHtmlCode);
+}
+
+function openPreviewNewTab() {
+  if (!lastHtmlCode) return;
+  const blob = new Blob([lastHtmlCode], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// Extract HTML from code block and add Run button
+function extractAndAddRunBtn(codeEl, lang) {
+  if (!['html', 'htm', ''].includes(lang.toLowerCase())) return;
+  const code = codeEl.textContent;
+  if (!code.includes('<') || code.length < 20) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'run-code-btn';
+  btn.textContent = '▶ Run';
+  btn.onclick = () => runCode(code);
+
+  const header = codeEl.closest('pre')?.previousElementSibling;
+  if (header && header.classList.contains('code-block-header')) {
+    header.appendChild(btn);
+  }
 }
 
 // ── Typing Indicator ───────────────────────────────────────────────────
