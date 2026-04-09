@@ -535,7 +535,14 @@ def poll_session(user):
 @operator_required
 def operator_sessions(user):
     sessions = ChatSession.query.order_by(ChatSession.updated_at.desc()).limit(100).all()
-    return jsonify([s.to_dict() for s in sessions])
+    result = []
+    for s in sessions:
+        d = s.to_dict()
+        u = db.session.get(User, s.user_id)
+        d['user'] = {'id': u.id, 'username': u.username, 'email': u.email} if u else None
+        d['messages'] = [m.to_dict() for m in s.messages.order_by(ChatMessage.created_at).limit(1).all()]
+        result.append(d)
+    return jsonify(result)
 
 @app.route('/api/operator/session/<int:sid>')
 @operator_required
