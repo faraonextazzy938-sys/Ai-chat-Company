@@ -727,6 +727,9 @@ async function sendMessage() {
     renderMessages();
     renderChatsList();
 
+    // Save to server for operator panel
+    saveToServer(text, reply);
+
     // Update credits
     if (currentUser) {
       try {
@@ -743,6 +746,22 @@ async function sendMessage() {
     document.getElementById('send-btn').disabled = false;
     input.focus();
   }
+}
+
+// ── Save messages to server (for operator panel) ──────────────────────
+async function saveToServer(userText, aiReply) {
+  try {
+    await fetch('/api/session/message', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: userText, role: 'user' })
+    });
+    await fetch('/api/session/message', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: aiReply, role: 'ai' })
+    });
+  } catch (_) {}
 }
 
 function buildMessages(chat) {
