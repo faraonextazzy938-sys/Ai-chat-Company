@@ -45,7 +45,7 @@ db = SQLAlchemy(app)
 # ── Constants ─────────────────────────────────────────────────────────
 GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions'
 NOMCHAT_URL = os.environ.get('NOMCHAT_URL', 'https://nomchat-id.up.railway.app')
-OPERATOR_EMAIL = os.environ.get('OPERATOR_EMAIL', 'admin@aichat.local')
+OPERATOR_EMAIL = os.environ.get('OPERATOR_EMAIL', 'ai@com.ru')
 
 PLANS = {
     'free':  {'credits': 50,   'bonus': 300,  'label': 'Free'},
