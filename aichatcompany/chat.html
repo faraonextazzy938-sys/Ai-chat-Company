@@ -226,11 +226,14 @@
       <span class="topbar-title" id="chat-title">New conversation</span>
       <span class="agent-indicator" id="agent-indicator">🤖 AI Assistant</span>
       <select class="model-sel" id="model-sel" title="Select AI model">
-        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
-        <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
-        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-        <option value="gemma2-9b-it">Gemma2 9B</option>
-        <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
+        <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+        <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B (fast)</option>
+        <option value="mistralai/mixtral-8x7b-instruct">Mixtral 8x7B</option>
+        <option value="google/gemma-2-9b-it">Gemma 2 9B</option>
+        <option value="meta-llama/llama-4-scout">Llama 4 Scout</option>
+        <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+        <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+        <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
       </select>
       <button class="icon-btn" onclick="clearChat()" title="Clear chat">🗑️</button>
       <button class="preview-toggle-btn" id="preview-toggle" onclick="togglePreview()" title="Live Preview">
@@ -308,7 +311,7 @@
 'use strict';
 
 // ── Constants ──────────────────────────────────────────────────────────
-const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API = 'https://openrouter.ai/api/v1/chat/completions';
 const CHATS_KEY = 'aichat_chats';
 const ACTIVE_KEY = 'aichat_active';
 
@@ -807,7 +810,7 @@ async function streamGroq(chat, messages) {
   try {
     res = await fetch(GROQ_API, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': location.origin, 'X-Title': 'AI Chat Company' },
       body: JSON.stringify({ model, messages, max_tokens: 2048, temperature: 0.7, top_p: 0.9, stream: true })
     });
   } catch (fetchErr) {

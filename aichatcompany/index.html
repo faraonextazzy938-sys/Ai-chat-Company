@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chat Company — AI that actually understands you</title>
+<title>AI Chat Company вЂ” AI that actually understands you</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="index.css">
 <style>
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    ROOT & RESET
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 :root {
   --c: #10a37f;
   --c2: #1a7f64;
@@ -31,9 +31,9 @@ body {
   position: relative;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    ANIMATED GRID BACKGROUND
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .grid-bg {
   position: fixed;
   inset: 0;
@@ -50,9 +50,9 @@ body {
   100% { background-position: 40px 40px, 40px 40px; }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    NOISE TEXTURE OVERLAY
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .noise-overlay {
   position: fixed;
   inset: 0;
@@ -63,9 +63,9 @@ body {
   background-size: 128px 128px;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    RADIAL GLOW ORBS
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .glow-orb {
   position: fixed;
   border-radius: 50%;
@@ -98,9 +98,9 @@ body {
   66%      { transform: translate(-15px,15px) scale(0.97); }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    GLASS MORPHISM HEADER
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   height: 64px; padding: 0 32px;
@@ -161,9 +161,9 @@ body {
   transform: translateY(-1px);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    HERO SECTION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .hero {
   position: relative; z-index: 2;
   min-height: 100vh;
@@ -271,9 +271,9 @@ body {
   display: flex; justify-content: center; align-items: center;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    CSS FOX CHARACTER
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .fox-wrap {
   position: relative;
   width: 340px; height: 420px;
@@ -578,9 +578,9 @@ body {
 }
 .fox-tooltip-link:hover { text-decoration: underline; }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    DEMO CHAT SECTION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .demo-section {
   position: relative; z-index: 2;
   padding: 100px 32px;
@@ -741,9 +741,9 @@ body {
   cursor: not-allowed; box-shadow: none; transform: none;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    FEATURES SECTION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .features-section {
   position: relative; z-index: 2;
   padding: 100px 32px;
@@ -803,9 +803,9 @@ body {
   color: var(--c); letter-spacing: 0.3px;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    NOMCHAT ID SECTION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .nomchat-section {
   position: relative; z-index: 2;
   padding: 100px 32px;
@@ -898,9 +898,9 @@ body {
 }
 .nc-cta-note { font-size: 12px; color: rgba(255,255,255,0.35); }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    CTA SECTION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .cta-section {
   position: relative; z-index: 2;
   padding: 100px 32px;
@@ -947,9 +947,9 @@ body {
   transform: translateY(-1px);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    FOOTER
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .footer {
   position: relative; z-index: 2;
   padding: 48px 32px 32px;
@@ -994,9 +994,9 @@ body {
 }
 .footer-legal a:hover { color: var(--text); }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    COLOR PICKER
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 #color-picker-btn {
   position: fixed; bottom: 24px; right: 24px; z-index: 9000;
   width: 46px; height: 46px; border-radius: 50%;
@@ -1036,9 +1036,9 @@ body {
 .color-swatch:hover { transform: scale(1.28); }
 .color-swatch.active { border-color: #333; transform: scale(1.2); }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    SCROLL REVEAL
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .reveal {
   opacity: 0;
   transform: translateY(30px);
@@ -1052,9 +1052,9 @@ body {
 .reveal-delay-4 { transition-delay: 0.4s; }
 .reveal-delay-5 { transition-delay: 0.5s; }
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    RESPONSIVE
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 @media (max-width: 900px) {
   .hero-inner { grid-template-columns: 1fr; text-align: center; }
   .hero-right { display: none; }
@@ -1082,9 +1082,9 @@ body {
 <div class="glow-orb glow-orb-2"></div>
 <div class="glow-orb glow-orb-3"></div>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      HEADER
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <header class="header" id="mainHeader">
   <div class="header-inner">
     <a href="/" class="logo">
@@ -1098,7 +1098,7 @@ body {
       <span class="logo-text">AI Chat Company</span>
     </a>
     <nav class="nav">
-      <a href="/chat.html" class="nav-link">💬 Chat</a>
+      <a href="/chat.html" class="nav-link">рџ’¬ Chat</a>
       <a href="#features" class="nav-link">Features</a>
       <a href="#demo" class="nav-link">Try it</a>
       <a href="#nomchat" class="nav-link">Nomchat ID</a>
@@ -1110,9 +1110,9 @@ body {
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      HERO SECTION
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <section class="hero">
   <div class="hero-inner">
     <!-- Left: text content -->
@@ -1125,16 +1125,16 @@ body {
         AI that actually<br><em>understands you</em>
       </h1>
       <p class="hero-sub reveal reveal-delay-2">
-        AI Chat Pro — free, powerful AI for chat, code, and creativity.
+        AI Chat Pro вЂ” free, powerful AI for chat, code, and creativity.
         Sign in with Nomchat ID and get 350 free credits instantly.
       </p>
       <div class="hero-actions reveal reveal-delay-3">
         <a href="/chat.html" class="btn-primary">
           <span>Start chatting</span>
-          <span>→</span>
+          <span>в†’</span>
         </a>
         <a href="https://nomchat-id.up.railway.app" target="_blank" class="btn-nomchat-hero">
-          <span class="btn-nomchat-hero-icon">🔑</span>
+          <span class="btn-nomchat-hero-icon">рџ”‘</span>
           <span class="btn-nomchat-hero-text">
             <span class="btn-nomchat-hero-label">Sign in with</span>
             <span class="btn-nomchat-hero-brand">NOMCHAT ID</span>
@@ -1211,11 +1211,11 @@ body {
         <div class="fox-water-drops" id="foxWaterDrops"></div>
         <!-- Tooltip -->
         <div class="fox-tooltip">
-          <div class="fox-tooltip-badge">✨ NEW</div>
+          <div class="fox-tooltip-badge">вњЁ NEW</div>
           <div class="fox-tooltip-title">Meet Nomchat ID</div>
-          <div class="fox-tooltip-text">Sign in once, use everywhere. One identity across all Nomchat-powered apps — no more passwords.</div>
+          <div class="fox-tooltip-text">Sign in once, use everywhere. One identity across all Nomchat-powered apps вЂ” no more passwords.</div>
           <a href="https://nomchat-id.up.railway.app" target="_blank" class="fox-tooltip-link">
-            Learn more →
+            Learn more в†’
           </a>
         </div>
       </div>
@@ -1223,9 +1223,9 @@ body {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      DEMO CHAT SECTION
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <section class="demo-section" id="demo">
   <div class="section-inner">
     <div class="section-eyebrow-wrap reveal">
@@ -1239,10 +1239,10 @@ body {
         </div>
         <span class="demo-topbar-title">AI Chat Pro</span>
         <select class="demo-model-sel" id="demoModel">
-          <option value="llama-3.3-70b-versatile">🦙 Llama 3.3 70B</option>
-          <option value="llama-3.1-8b-instant">🦙 Llama 3.1 8B</option>
-          <option value="mixtral-8x7b-32768">⚡ Mixtral 8x7B</option>
-          <option value="gemma2-9b-it">💎 Gemma2 9B</option>
+          <option value="meta-llama/llama-3.3-70b-instruct">рџ¦™ Llama 3.3 70B</option>
+          <option value="meta-llama/llama-3.1-8b-instruct">рџ¦™ Llama 3.1 8B</option>
+          <option value="mistralai/mixtral-8x7b-instruct">вљЎ Mixtral 8x7B</option>
+          <option value="google/gemma-2-9b-it">рџ’Ћ Gemma2 9B</option>
         </select>
       </div>
       <div class="demo-messages" id="demoMessages">
@@ -1250,7 +1250,7 @@ body {
         <div class="demo-msg ai">
           <div class="demo-av ai-av">AI</div>
           <div class="demo-bubble">
-            👋 Hi! I'm AI Chat Pro, powered by Llama 3.3 70B. Ask me anything — code, writing, math, or just a chat!
+            рџ‘‹ Hi! I'm AI Chat Pro, powered by Llama 3.3 70B. Ask me anything вЂ” code, writing, math, or just a chat!
           </div>
         </div>
       </div>
@@ -1261,15 +1261,15 @@ body {
           placeholder="Ask anything..."
           autocomplete="off"
         />
-        <button class="demo-send-btn" id="demoSendBtn" onclick="demoSend()">↑</button>
+        <button class="demo-send-btn" id="demoSendBtn" onclick="demoSend()">в†‘</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      FEATURES SECTION
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <section class="features-section" id="features">
   <div class="features-inner">
     <div class="section-eyebrow-wrap reveal" style="text-align:center;margin-bottom:56px">
@@ -1278,37 +1278,37 @@ body {
     </div>
     <div class="features-grid">
       <div class="feature-card reveal">
-        <span class="feature-icon">🦙</span>
+        <span class="feature-icon">рџ¦™</span>
         <h3>Llama 3.3 70B</h3>
-        <p>Meta's most capable open model. Exceptional reasoning, coding, and multilingual support — all free.</p>
+        <p>Meta's most capable open model. Exceptional reasoning, coding, and multilingual support вЂ” all free.</p>
         <span class="feature-tag">Default model</span>
       </div>
       <div class="feature-card reveal reveal-delay-1">
-        <span class="feature-icon">🎨</span>
+        <span class="feature-icon">рџЋЁ</span>
         <h3>Image Generation</h3>
         <p>Create stunning images from text prompts. Powered by state-of-the-art diffusion models.</p>
         <span class="feature-tag">Coming soon</span>
       </div>
       <div class="feature-card reveal reveal-delay-2">
-        <span class="feature-icon">🎙️</span>
+        <span class="feature-icon">рџЋ™пёЏ</span>
         <h3>Voice Assistant</h3>
         <p>Talk to your AI naturally. Real-time speech recognition and natural voice responses.</p>
         <span class="feature-tag">Beta</span>
       </div>
       <div class="feature-card reveal reveal-delay-3">
-        <span class="feature-icon">🤖</span>
+        <span class="feature-icon">рџ¤–</span>
         <h3>Smart Agents</h3>
         <p>Autonomous AI agents that browse the web, run code, and complete multi-step tasks for you.</p>
         <span class="feature-tag">Pro feature</span>
       </div>
       <div class="feature-card reveal reveal-delay-4">
-        <span class="feature-icon">⚡</span>
+        <span class="feature-icon">вљЎ</span>
         <h3>350 Free Credits</h3>
         <p>Sign up with Nomchat ID and get 350 credits instantly. No credit card required, ever.</p>
         <span class="feature-tag">Free forever</span>
       </div>
       <div class="feature-card reveal reveal-delay-5">
-        <span class="feature-icon">🔑</span>
+        <span class="feature-icon">рџ”‘</span>
         <h3>Nomchat ID</h3>
         <p>One identity across all Nomchat apps. Sign in once, stay signed in everywhere. Privacy-first.</p>
         <span class="feature-tag">Universal login</span>
@@ -1317,46 +1317,46 @@ body {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      NOMCHAT ID SECTION
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <section class="nomchat-section" id="nomchat">
   <div class="nomchat-inner">
     <!-- Left: text -->
     <div class="nomchat-text reveal">
       <div class="section-eyebrow-pill pill-purple" style="margin-bottom:20px">Nomchat ID</div>
       <h2>One login.<br>Every app.</h2>
-      <p>Nomchat ID is your universal identity for the Nomchat ecosystem. Sign in once and access every app seamlessly — no more forgotten passwords.</p>
+      <p>Nomchat ID is your universal identity for the Nomchat ecosystem. Sign in once and access every app seamlessly вЂ” no more forgotten passwords.</p>
       <div class="nomchat-perks">
         <div class="perk">
-          <div class="perk-check">✓</div>
+          <div class="perk-check">вњ“</div>
           <span>Sign in once, use everywhere</span>
         </div>
         <div class="perk">
-          <div class="perk-check">✓</div>
+          <div class="perk-check">вњ“</div>
           <span>350 free credits on first login</span>
         </div>
         <div class="perk">
-          <div class="perk-check">✓</div>
+          <div class="perk-check">вњ“</div>
           <span>Secure OAuth 2.0 authentication</span>
         </div>
         <div class="perk">
-          <div class="perk-check">✓</div>
+          <div class="perk-check">вњ“</div>
           <span>Privacy-first, no tracking</span>
         </div>
         <div class="perk">
-          <div class="perk-check">✓</div>
+          <div class="perk-check">вњ“</div>
           <span>Works across all Nomchat apps</span>
         </div>
       </div>
       <a href="https://nomchat-id.up.railway.app" target="_blank" class="btn-primary" style="display:inline-flex">
-        Get Nomchat ID →
+        Get Nomchat ID в†’
       </a>
     </div>
     <!-- Right: dark card -->
     <div class="nomchat-visual reveal reveal-delay-2">
       <div class="nc-logo-row">
-        <span class="nc-logo-icon">🔑</span>
+        <span class="nc-logo-icon">рџ”‘</span>
         <span class="nc-logo-name">NOMCHAT ID</span>
         <span class="nc-logo-badge">BETA</span>
       </div>
@@ -1379,7 +1379,7 @@ body {
           <div class="nc-step-num">3</div>
           <div class="nc-step-text">
             <strong>Get your 350 free credits</strong>
-            First-time login rewards you with 350 credits — start chatting immediately.
+            First-time login rewards you with 350 credits вЂ” start chatting immediately.
           </div>
         </div>
         <div class="nc-step">
@@ -1399,9 +1399,9 @@ body {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      CTA SECTION
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <section class="cta-section">
   <div class="cta-inner">
     <h2 class="cta-title reveal">
@@ -1411,15 +1411,15 @@ body {
       Join 50,000+ users already using AI Chat Pro. Free forever, no credit card required.
     </p>
     <div class="cta-actions reveal reveal-delay-2">
-      <a href="/chat.html" class="btn-primary">Start chatting free →</a>
+      <a href="/chat.html" class="btn-primary">Start chatting free в†’</a>
       <a href="https://nomchat-id.up.railway.app" target="_blank" class="btn-ghost">Get Nomchat ID</a>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      FOOTER
-═══════════════════════════════════════════════════════ -->
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-brand">
@@ -1450,7 +1450,7 @@ body {
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">© 2026 AI Chat Company. All rights reserved.</span>
+    <span class="footer-copy">В© 2026 AI Chat Company. All rights reserved.</span>
     <div class="footer-legal">
       <a href="#">Privacy</a>
       <a href="#">Terms</a>
@@ -1459,10 +1459,10 @@ body {
   </div>
 </footer>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
      COLOR PICKER
-═══════════════════════════════════════════════════════ -->
-<button id="color-picker-btn" title="Change accent color" aria-label="Change accent color">🎨</button>
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+<button id="color-picker-btn" title="Change accent color" aria-label="Change accent color">рџЋЁ</button>
 <div id="color-palette" role="listbox" aria-label="Color swatches">
   <div class="color-swatch active" data-color="#10a37f" data-color2="#1a7f64" data-rgb="16,163,127" style="background:#10a37f" title="Green" role="option"></div>
   <div class="color-swatch" data-color="#7c3aed" data-color2="#6d28d9" data-rgb="124,58,237" style="background:#7c3aed" title="Purple" role="option"></div>
@@ -1473,9 +1473,9 @@ body {
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    AUTH CHECK
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 (async () => {
   try {
     const r = await fetch('/api/auth/me', { credentials: 'include' });
@@ -1483,19 +1483,19 @@ body {
       const user = await r.json();
       const actions = document.getElementById('headerActions');
       if (actions) {
-        const total = user.total_credits === -1 ? '∞' : (user.total_credits || 0);
+        const total = user.total_credits === -1 ? 'в€ћ' : (user.total_credits || 0);
         actions.innerHTML = `
-          <span style="font-size:13px;color:#888;font-weight:600">⚡ ${total} credits</span>
-          <a href="/chat.html" class="btn-signup">Open Chat →</a>
+          <span style="font-size:13px;color:#888;font-weight:600">вљЎ ${total} credits</span>
+          <a href="/chat.html" class="btn-signup">Open Chat в†’</a>
         `;
       }
     }
   } catch (_) {}
 })();
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    HEADER SCROLL EFFECT
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 const mainHeader = document.getElementById('mainHeader');
 window.addEventListener('scroll', () => {
   if (window.scrollY > 20) {
@@ -1505,9 +1505,9 @@ window.addEventListener('scroll', () => {
   }
 }, { passive: true });
 
-/* ═══════════════════════════════════════════════════════════
-   SCROLL REVEAL — IntersectionObserver
-═══════════════════════════════════════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+   SCROLL REVEAL вЂ” IntersectionObserver
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -1519,9 +1519,9 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    COLOR PICKER
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 const colorBtn = document.getElementById('color-picker-btn');
 const colorPalette = document.getElementById('color-palette');
 
@@ -1551,9 +1551,9 @@ document.querySelectorAll('.color-swatch').forEach(swatch => {
   });
 });
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    FOX WATER GUN ANIMATION
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 const foxWrap = document.getElementById('foxWrap');
 const foxWaterDrops = document.getElementById('foxWaterDrops');
 let waterInterval = null;
@@ -1583,9 +1583,9 @@ foxWrap.addEventListener('mouseleave', () => {
   waterInterval = null;
 });
 
-/* ═══════════════════════════════════════════════════════════
-   DEMO CHAT — Groq API
-═══════════════════════════════════════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+   DEMO CHAT вЂ” Groq API
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 let groqKey = null;
 let demoHistory = [];
 let demoLoading = false;
@@ -1669,7 +1669,7 @@ async function demoSend() {
 
   try {
     if (groqKey) {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1689,15 +1689,15 @@ async function demoSend() {
         demoHistory.push({ role: 'assistant', content: reply });
         addDemoMessage('ai', reply);
       } else {
-        addDemoMessage('ai', '⚠️ Error connecting to AI. Please try again.');
+        addDemoMessage('ai', 'вљ пёЏ Error connecting to AI. Please try again.');
       }
     } else {
       removeTypingIndicator();
-      addDemoMessage('ai', '⏳ AI is initializing... Please try again in a moment.');
+      addDemoMessage('ai', 'вЏі AI is initializing... Please try again in a moment.');
     }
   } catch (err) {
     removeTypingIndicator();
-    addDemoMessage('ai', '⚠️ Connection error. Please check your network and try again.');
+    addDemoMessage('ai', 'вљ пёЏ Connection error. Please check your network and try again.');
   }
 
   demoLoading = false;
@@ -1713,9 +1713,9 @@ document.getElementById('demoInput').addEventListener('keydown', (e) => {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
    SMOOTH NAV SCROLL
-═══════════════════════════════════════════════════════════ */
+в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 document.querySelectorAll('a[href^="#"]').forEach(link => {
   link.addEventListener('click', (e) => {
     const target = document.querySelector(link.getAttribute('href'));
@@ -1728,3 +1728,4 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
 </script>
 </body>
 </html>
+

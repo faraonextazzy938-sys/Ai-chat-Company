@@ -1,5 +1,5 @@
-"""
-AI Chat Company — Optimized Flask Server
+﻿"""
+AI Chat Company вЂ” Optimized Flask Server
 Features: Auth, Groq AI, Sessions, Credits, Operator, Image Gen, Voice, Preview
 """
 from flask import Flask, request, jsonify, session, send_from_directory, Response, stream_with_context
@@ -12,7 +12,7 @@ import os, re, secrets, requests, traceback, json, time
 
 app = Flask(__name__, static_folder='.')
 
-# ── Config ────────────────────────────────────────────────────────────
+# в”Ђв”Ђ Config в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 app.secret_key = os.environ.get('SECRET_KEY', 'aichat-dev-secret-2026')
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -42,8 +42,8 @@ CORS(app, supports_credentials=True,
      origins=os.environ.get('ALLOWED_ORIGINS', '*').split(','))
 db = SQLAlchemy(app)
 
-# ── Constants ─────────────────────────────────────────────────────────
-GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions'
+# в”Ђв”Ђ Constants в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+GROQ_URL    = 'https://openrouter.ai/api/v1/chat/completions'
 NOMCHAT_URL = os.environ.get('NOMCHAT_URL', 'https://nomchat-id.up.railway.app')
 OPERATOR_EMAIL = os.environ.get('OPERATOR_EMAIL', 'ai@com.ru')
 
@@ -54,7 +54,7 @@ PLANS = {
     'ultra': {'credits': -1,   'bonus': 0,    'label': 'Ultra'},
 }
 
-# ── Models ────────────────────────────────────────────────────────────
+# в”Ђв”Ђ Models в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 class User(db.Model):
     __tablename__ = 'users'
     id             = db.Column(db.Integer, primary_key=True)
@@ -63,7 +63,7 @@ class User(db.Model):
     password_hash  = db.Column(db.String(256))
     nomchat_id     = db.Column(db.String(64), index=True)
     nomchat_username = db.Column(db.String(80))
-    nomchat_avatar = db.Column(db.String(10), default='💬')
+    nomchat_avatar = db.Column(db.String(10), default='рџ’¬')
     credits        = db.Column(db.Integer, default=50)
     bonus_credits  = db.Column(db.Integer, default=300)
     plan           = db.Column(db.String(20), default='free')
@@ -85,7 +85,7 @@ class User(db.Model):
             'credits': self.credits or 0, 'bonus_credits': self.bonus_credits or 0,
             'total_credits': total, 'plan': self.plan or 'free',
             'nomchat_id': self.nomchat_id, 'nomchat_username': self.nomchat_username,
-            'nomchat_avatar': self.nomchat_avatar or '💬',
+            'nomchat_avatar': self.nomchat_avatar or 'рџ’¬',
             'has_password': bool(self.password_hash),
             'is_operator': self.is_operator or False,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -145,11 +145,11 @@ class ChatMessage(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
-# ── DB Init ───────────────────────────────────────────────────────────
+# в”Ђв”Ђ DB Init в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 with app.app_context():
     db.create_all()
 
-# ── Rate limiting (in-memory) ─────────────────────────────────────────
+# в”Ђв”Ђ Rate limiting (in-memory) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 _rate_store: dict = {}
 
 def rate_limit(key: str, max_calls: int = 10, window: int = 60) -> bool:
@@ -161,7 +161,7 @@ def rate_limit(key: str, max_calls: int = 10, window: int = 60) -> bool:
     _rate_store[key] = calls
     return True
 
-# ── Auth decorators ───────────────────────────────────────────────────
+# в”Ђв”Ђ Auth decorators в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -189,7 +189,7 @@ def operator_required(f):
         return f(*args, user=user, **kwargs)
     return decorated
 
-# ── Static files ──────────────────────────────────────────────────────
+# в”Ђв”Ђ Static files в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -216,7 +216,7 @@ def server_error(e):
     app.logger.error(f'500: {e}\n{traceback.format_exc()}')
     return jsonify({'error': 'Internal server error'}), 500
 
-# ── Auth: Register ────────────────────────────────────────────────────
+# в”Ђв”Ђ Auth: Register в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     ip = request.remote_addr
@@ -231,7 +231,7 @@ def register():
     if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
         return jsonify({'error': 'Invalid email address'}), 400
     if not username or len(username) < 2 or len(username) > 50:
-        return jsonify({'error': 'Username must be 2–50 characters'}), 400
+        return jsonify({'error': 'Username must be 2вЂ“50 characters'}), 400
     if not password or len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters'}), 400
     if User.query.filter_by(email=email).first():
@@ -251,7 +251,7 @@ def register():
         app.logger.error(f'Register error: {e}')
         return jsonify({'error': 'Registration failed. Please try again.'}), 500
 
-# ── Auth: Login ───────────────────────────────────────────────────────
+# в”Ђв”Ђ Auth: Login в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     ip = request.remote_addr
@@ -278,7 +278,7 @@ def login():
     session.permanent = True
     return jsonify({'success': True, 'user': user.to_dict()})
 
-# ── Auth: Nomchat OAuth ───────────────────────────────────────────────
+# в”Ђв”Ђ Auth: Nomchat OAuth в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/nomchat', methods=['POST'])
 def nomchat_auth():
     d = request.get_json(silent=True) or {}
@@ -313,13 +313,13 @@ def nomchat_auth():
                 username=nc_user.get('username', email.split('@')[0]),
                 nomchat_id=str(nc_user.get('id', '')),
                 nomchat_username=nc_user.get('username', ''),
-                nomchat_avatar=nc_user.get('avatar', '💬'),
+                nomchat_avatar=nc_user.get('avatar', 'рџ’¬'),
             )
             db.session.add(user)
         else:
             user.nomchat_id       = str(nc_user.get('id', ''))
             user.nomchat_username = nc_user.get('username', user.nomchat_username)
-            user.nomchat_avatar   = nc_user.get('avatar', user.nomchat_avatar or '💬')
+            user.nomchat_avatar   = nc_user.get('avatar', user.nomchat_avatar or 'рџ’¬')
 
         if user.is_banned:
             return jsonify({'error': 'Account banned'}), 403
@@ -345,22 +345,22 @@ def logout():
     session.clear()
     return jsonify({'success': True})
 
-# ── Config: Groq Key ─────────────────────────────────────────────────
+# в”Ђв”Ђ Config: Groq Key в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/config/groq-key')
 def get_groq_key():
-    key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    key = os.environ.get('OPENROUTER_KEY', '')
     if not key:
         return jsonify({'error': 'Groq not configured'}), 503
     return jsonify({'key': key})
 
-# ── Chat: Groq proxy with streaming ──────────────────────────────────
+# в”Ђв”Ђ Chat: Groq proxy with streaming в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def chat(user):
     if not user.has_credits():
         return jsonify({'error': 'no_credits', 'message': 'No credits remaining.'}), 402
 
-    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    groq_key = os.environ.get('OPENROUTER_KEY', '')
     if not groq_key:
         return jsonify({'error': 'AI service not configured'}), 503
 
@@ -371,14 +371,19 @@ def chat(user):
 
     # Validate model
     ALLOWED_MODELS = {
-        'llama-3.3-70b-versatile', 'llama-3.1-70b-versatile',
-        'llama-3.1-8b-instant', 'mixtral-8x7b-32768',
-        'gemma2-9b-it', 'meta-llama/llama-4-scout-17b-16e-instruct',
+        'meta-llama/llama-3.3-70b-instruct',
+        'meta-llama/llama-3.1-8b-instruct',
+        'mistralai/mixtral-8x7b-instruct',
+        'google/gemma-2-9b-it',
+        'meta-llama/llama-4-scout',
+        'anthropic/claude-3-haiku',
+        'openai/gpt-4o-mini',
+        'deepseek/deepseek-chat',
     }
     if model not in ALLOWED_MODELS:
-        model = 'llama-3.3-70b-versatile'
+        model = 'meta-llama/llama-3.3-70b-instruct'
 
-    # Filter messages — only string content for Groq
+    # Filter messages вЂ” only string content for Groq
     clean_msgs = []
     for m in messages:
         role    = m.get('role', 'user')
@@ -388,7 +393,7 @@ def chat(user):
         if isinstance(content, str) and content.strip():
             clean_msgs.append({'role': role, 'content': content.strip()})
         elif isinstance(content, list):
-            # multimodal — keep as-is for vision models
+            # multimodal вЂ” keep as-is for vision models
             clean_msgs.append({'role': role, 'content': content})
 
     if not clean_msgs:
@@ -406,6 +411,8 @@ def chat(user):
     headers = {
         'Authorization': f'Bearer {groq_key}',
         'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://aichatcompany.up.railway.app',
+        'X-Title': 'AI Chat Company',
     }
 
     try:
@@ -449,7 +456,7 @@ def chat(user):
         app.logger.error(f'Chat error: {e}')
         return jsonify({'error': str(e)}), 500
 
-# ── User: Update / Delete ─────────────────────────────────────────────
+# в”Ђв”Ђ User: Update / Delete в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/user/update', methods=['POST'])
 @login_required
 def update_user(user):
@@ -471,12 +478,12 @@ def delete_user(user):
     session.clear()
     return jsonify({'success': True})
 
-# ── Plans ─────────────────────────────────────────────────────────────
+# в”Ђв”Ђ Plans в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/plans')
 def get_plans():
     return jsonify(PLANS)
 
-# ── Chat Sessions (operator) ──────────────────────────────────────────
+# в”Ђв”Ђ Chat Sessions (operator) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/session/get', methods=['POST'])
 @login_required
 def get_session(user):
@@ -530,7 +537,7 @@ def poll_session(user):
         'session_id': sess.id,
     })
 
-# ── Operator ──────────────────────────────────────────────────────────
+# в”Ђв”Ђ Operator в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/operator/sessions')
 @operator_required
 def operator_sessions(user):
@@ -598,7 +605,7 @@ def operator_poll(user, sid):
     ).order_by(ChatMessage.created_at).all()
     return jsonify({'messages': [m.to_dict() for m in msgs]})
 
-# ── Image Generation ──────────────────────────────────────────────────
+# в”Ђв”Ђ Image Generation в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/image/generate', methods=['POST'])
 @login_required
 def generate_image(user):
@@ -631,7 +638,7 @@ def generate_image(user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ── Voice Transcription ───────────────────────────────────────────────
+# в”Ђв”Ђ Voice Transcription в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/voice/transcribe', methods=['POST'])
 @login_required
 def transcribe_audio(user):
@@ -657,7 +664,7 @@ def transcribe_audio(user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ── Website Preview ───────────────────────────────────────────────────
+# в”Ђв”Ђ Website Preview в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/preview/url', methods=['POST'])
 @login_required
 def preview_url(user):
@@ -691,10 +698,10 @@ def preview_url(user):
         'fallback': True,
     })
 
-# ── Health check ──────────────────────────────────────────────────────
+# в”Ђв”Ђ Health check в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/health')
 def health():
-    groq_key = os.environ.get('GROQ_API') or os.environ.get('GROQ_KEY', '')
+    groq_key = os.environ.get('OPENROUTER_KEY', '')
     return jsonify({
         'status': 'ok',
         'groq': bool(groq_key),
@@ -702,7 +709,8 @@ def health():
         'timestamp': datetime.utcnow().isoformat(),
     })
 
-# ── Run ───────────────────────────────────────────────────────────────
+# в”Ђв”Ђ Run в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+

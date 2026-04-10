@@ -6,7 +6,7 @@
 'use strict';
 
 // ── Constants ──────────────────────────────────────────────────────────
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MAX_DEMO_HISTORY = 20;
 const DEMO_HISTORY_KEY = 'aichat_demo_history';
 const COLOR_KEY = 'aichat_color';
@@ -384,7 +384,7 @@ async function callGroqStreaming(model, messages, typingEl) {
   try {
     res = await fetch(GROQ_API_URL, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': location.origin, 'X-Title': 'AI Chat Company' },
       body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.8, stream: true })
     });
   } catch (e) {
