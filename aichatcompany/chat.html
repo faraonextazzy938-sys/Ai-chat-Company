@@ -1061,6 +1061,10 @@ function setupInput() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      // Easter egg
+      if (input.value.trim() === '18934') {
+        input.value = 'Илья черный';
+      }
       sendMessage();
     }
   });
