@@ -12,10 +12,10 @@
   background: #fff;
   border-left: 1px solid rgba(255,255,255,0.08);
   display: flex; flex-direction: column;
-  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
   overflow: hidden;
 }
-.preview-panel.open { width: 480px; }
+.preview-panel.open { width: 50vw; min-width: 400px; }
 .preview-topbar {
   height: 40px; padding: 0 14px;
   background: #1a1a2e;
@@ -46,7 +46,7 @@
   transition: all 0.15s;
 }
 .preview-action-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
-.preview-iframe-wrap { flex: 1; position: relative; }
+.preview-iframe-wrap { flex: 1; position: relative; overflow: hidden; }
 .preview-iframe {
   width: 100%; height: 100%;
   border: none; background: #fff;
@@ -56,48 +56,12 @@
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 12px; color: #888; font-size: 14px;
-  background: #f7f7f8;
+  background: #fff;
 }
-.preview-empty-icon { font-size: 40px; opacity: 0.4; }
+.preview-empty-icon { font-size: 40px; opacity: 0.3; }
 
-/* ── Agents sidebar strip ── */
-.agents-strip {
-  width: 52px; flex-shrink: 0;
-  background: #0d0d12;
-  border-right: 1px solid rgba(255,255,255,0.06);
-  display: flex; flex-direction: column;
-  align-items: center; padding: 12px 0; gap: 4px;
-}
-.agent-btn {
-  width: 38px; height: 38px;
-  border-radius: 10px; border: none;
-  background: transparent; cursor: pointer;
-  font-size: 18px; transition: all 0.15s;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-}
-.agent-btn:hover { background: rgba(255,255,255,0.08); }
-.agent-btn.active {
-  background: rgba(16,163,127,0.2);
-  box-shadow: 0 0 0 1.5px rgba(16,163,127,0.5);
-}
-.agent-btn-tooltip {
-  position: absolute; left: 48px; top: 50%;
-  transform: translateY(-50%);
-  background: #1a1a2e; color: #fff;
-  font-size: 11px; font-weight: 600;
-  padding: 4px 8px; border-radius: 6px;
-  white-space: nowrap; pointer-events: none;
-  opacity: 0; transition: opacity 0.15s;
-  z-index: 100;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-.agent-btn:hover .agent-btn-tooltip { opacity: 1; }
-.agents-strip-divider {
-  width: 28px; height: 1px;
-  background: rgba(255,255,255,0.08);
-  margin: 4px 0;
-}
+/* ── Agents strip — hidden, auto-detection only ── */
+.agents-strip { display: none; }
 
 /* ── Preview toggle btn in topbar ── */
 .preview-toggle-btn {
@@ -852,10 +816,11 @@ async function streamGroq(chat, messages) {
   }
 
   msgEl.remove();
-  // Auto-run if web agent and HTML detected
-  if (currentAgent === 'web' && fullText.includes('<!DOCTYPE') || fullText.includes('<html')) {
-    const match = fullText.match(/```(?:html)?\n?([\s\S]*?)```/);
-    if (match) setTimeout(() => runCode(match[1]), 300);
+  // Auto-run if HTML detected in response
+  const htmlMatch = fullText.match(/```(?:html)?\n?([\s\S]*?<\/html>[\s\S]*?)```/i) ||
+                    fullText.match(/```(?:html)?\n?(<!DOCTYPE[\s\S]*?)```/i);
+  if (htmlMatch) {
+    setTimeout(() => runCode(htmlMatch[1]), 200);
   }
   return fullText;
 }
@@ -948,21 +913,13 @@ function openPreviewNewTab() {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-// Extract HTML from code block and add Run button
+// Extract HTML from code block and auto-run (no button needed)
 function extractAndAddRunBtn(codeEl, lang) {
   if (!['html', 'htm', ''].includes(lang.toLowerCase())) return;
   const code = codeEl.textContent;
-  if (!code.includes('<') || code.length < 20) return;
-
-  const btn = document.createElement('button');
-  btn.className = 'run-code-btn';
-  btn.textContent = '▶ Run';
-  btn.onclick = () => runCode(code);
-
-  const header = codeEl.closest('pre')?.previousElementSibling;
-  if (header && header.classList.contains('code-block-header')) {
-    header.appendChild(btn);
-  }
+  if (!code.includes('<') || code.length < 30) return;
+  // Auto-run immediately
+  runCode(code);
 }
 
 // ── Typing Indicator ───────────────────────────────────────────────────
