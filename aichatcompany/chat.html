@@ -200,6 +200,7 @@
         <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
       </select>
       <button class="icon-btn" onclick="clearChat()" title="Clear chat">🗑️</button>
+      <button class="icon-btn" onclick="openPromptModal()" title="Custom prompt" style="font-size:16px">⚙️</button>
       <button class="preview-toggle-btn" id="preview-toggle" onclick="togglePreview()" title="Live Preview">
         <span>⬜</span> Preview
       </button>
@@ -740,6 +741,7 @@ async function sendMessage() {
 
   } catch (err) {
     removeTypingIndicator();
+    if (err?.message === 'no_credits') return;
     appendErrorMsg(getErrMsg(err));
   } finally {
     isTyping = false;
@@ -766,7 +768,8 @@ async function saveToServer(userText, aiReply) {
 
 function buildMessages(chat) {
   const agent = AGENTS[chat.agent || 'default'] || AGENTS.default;
-  const system = { role: 'system', content: agent.prompt };
+  const systemContent = customPrompt || agent.prompt;
+  const system = { role: 'system', content: systemContent };
   const history = chat.messages.slice(-20).map(m => ({
     role: m.role === 'assistant' ? 'assistant' : 'user',
     content: typeof m.content === 'string' ? m.content : (m.content[0]?.text || '')
@@ -854,7 +857,7 @@ async function serverChat(messages) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    if (err.error === 'no_credits') throw new Error('No credits remaining. Please upgrade your plan.');
+    if (err.error === 'no_credits') { document.getElementById('credits-modal').style.display = 'flex'; throw new Error('no_credits'); }
     if (err.error === 'Unauthorized') throw new Error('Session expired. Please sign in again.');
     throw new Error(err.error || `Server error ${res.status}`);
   }
@@ -1156,6 +1159,74 @@ function showToast(msg, type = 'info') {
   c.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
 }
+
+async function buyCredits(plan) {
+  try {
+    const r = await fetch('/api/pay/checkout', {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({plan})
+    });
+    const d = await r.json();
+    if (d.url) window.open(d.url, '_blank');
+  } catch(e) { showToast('Payment error', 'error'); }
+}
+
+// ── Custom Prompt Modal ────────────────────────────────────────────────
+const CUSTOM_PROMPT_KEY = 'aichat_custom_prompt';
+let customPrompt = localStorage.getItem(CUSTOM_PROMPT_KEY) || '';
+
+function openPromptModal() {
+  document.getElementById('prompt-modal').style.display = 'flex';
+  document.getElementById('prompt-textarea').value = customPrompt;
+}
+
+function closePromptModal() {
+  document.getElementById('prompt-modal').style.display = 'none';
+}
+
+function savePrompt() {
+  customPrompt = document.getElementById('prompt-textarea').value.trim();
+  localStorage.setItem(CUSTOM_PROMPT_KEY, customPrompt);
+  closePromptModal();
+  showToast(customPrompt ? 'Custom prompt saved ✓' : 'Prompt cleared', 'success');
+}
 </script>
+
+<!-- No Credits Modal -->
+<div id="credits-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:36px;max-width:420px;width:100%;margin:20px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.5)">
+    <div style="font-size:48px;margin-bottom:16px">⚡</div>
+    <h2 style="font-size:22px;font-weight:900;color:#fff;margin-bottom:8px">Out of credits</h2>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.6">You've used all your credits. Get more to continue chatting with AI.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <button onclick="buyCredits('starter')" style="padding:14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:left;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'"><span>⚡ Starter — 100 credits</span><span style="color:#10a37f;font-weight:800">99 ₽</span></button>
+      <button onclick="buyCredits('pro')" style="padding:14px;background:rgba(16,163,127,0.12);border:1px solid rgba(16,163,127,0.3);border-radius:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:left;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='rgba(16,163,127,0.2)'" onmouseout="this.style.background='rgba(16,163,127,0.12)'"><span>🚀 Pro — 500 credits</span><span style="color:#10a37f;font-weight:800">299 ₽</span></button>
+      <button onclick="buyCredits('max')" style="padding:14px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);border-radius:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:left;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='rgba(124,58,237,0.2)'" onmouseout="this.style.background='rgba(124,58,237,0.1)'"><span>💎 Max — 2000 credits</span><span style="color:#a78bfa;font-weight:800">999 ₽</span></button>
+    </div>
+    <button onclick="document.getElementById('credits-modal').style.display='none'" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;font-family:inherit">Maybe later</button>
+  </div>
+</div>
+
+<!-- Custom Prompt Modal -->
+<div id="prompt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:999;align-items:center;justify-content:center;display:none">
+  <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:32px;max-width:520px;width:100%;margin:20px;box-shadow:0 24px 80px rgba(0,0,0,0.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">⚙️ Custom System Prompt</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4)">Defines how AI responds in this chat</div>
+      </div>
+      <button onclick="closePromptModal()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <textarea id="prompt-textarea" placeholder="Example: You are a pirate. Answer everything like a pirate. Say 'Arrr!' often." style="width:100%;height:160px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-family:inherit;resize:vertical;outline:none;line-height:1.6;transition:border-color 0.2s" onfocus="this.style.borderColor='rgba(16,163,127,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'"></textarea>
+    <div style="margin-top:8px;font-size:12px;color:rgba(255,255,255,0.3)">Leave empty to use default AI behavior</div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="clearPrompt()" style="padding:10px 18px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Clear</button>
+      <button onclick="closePromptModal()" style="flex:1;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
+      <button onclick="savePrompt()" style="flex:2;padding:10px;background:#10a37f;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(16,163,127,0.3);transition:all 0.15s" onmouseover="this.style.background='#0d8a6b'" onmouseout="this.style.background='#10a37f'">Save prompt</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

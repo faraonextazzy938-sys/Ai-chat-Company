@@ -737,9 +737,10 @@ body {
         <div class="credits-label">Actions</div>
         <div class="give-credits-row">
           <input type="number" class="give-credits-input" id="giveCreditsInput" placeholder="Credits amount" min="1" max="10000">
-          <button class="btn-give" onclick="giveCredits()">Give</button>
+          <button class="btn-give" onclick="giveCredits('add')">Add</button>
+          <button class="btn-give" onclick="giveCredits('set')" style="background:#3b82f6">Set to</button>
         </div>
-        <button class="btn-ban" onclick="banUser()">🚫 Ban User</button>
+        <button class="btn-ban" id="btnBan" data-banned="false" onclick="banUser()">🚫 Ban User</button>
       </div>
 
     </div>
@@ -901,10 +902,9 @@ function updateInfoPanel(u, session) {
 }
 
 async function fetchUserDetails(userId, session) {
-  // We don't have a direct user endpoint from operator, use session data
+  // Session stats
   const msgs = session.messages || [];
-  const msgCount = msgs.length;
-  document.getElementById('statMessages').textContent = msgCount;
+  document.getElementById('statMessages').textContent = msgs.length;
 
   if (session.created_at) {
     const created = new Date(session.created_at);
@@ -917,6 +917,15 @@ async function fetchUserDetails(userId, session) {
     document.getElementById('infoJoined').textContent = formatDate(session.created_at);
   }
   document.getElementById('infoLastLogin').textContent = session.updated_at ? formatTime(session.updated_at) : '—';
+
+  // Fetch full user details from operator endpoint
+  try {
+    const r = await fetch(`/api/operator/user/${userId}`, { credentials: 'include' });
+    if (r.ok) {
+      const u = await r.json();
+      renderUserDetails(u);
+    }
+  } catch(e) {}
 }
 
 // ── Messages ───────────────────────────────────────────────────────────
@@ -1055,18 +1064,86 @@ async function sendMessage() {
 }
 
 // ── Give Credits ───────────────────────────────────────────────────────
-async function giveCredits() {
+async function giveCredits(mode = 'add') {
   const input = document.getElementById('giveCreditsInput');
   const amount = parseInt(input.value);
   if (!amount || amount < 1) { toast('Enter a valid amount', 'error'); return; }
-  toast(`Credits feature coming soon (${amount} credits)`, 'info');
-  input.value = '';
+  const u = sessions.find(x => x.id === currentSession?.id)?.user;
+  if (!u?.id) { toast('No user selected', 'error'); return; }
+  try {
+    const r = await fetch(`/api/operator/user/${u.id}/credits`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, mode })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast(`Credits ${mode === 'set' ? 'set to' : 'added:'} ${amount}`, 'success');
+      input.value = '';
+      refreshUserInfo(u.id);
+    } else {
+      toast(data.error || 'Failed', 'error');
+    }
+  } catch(e) { toast('Error updating credits', 'error'); }
 }
 
 // ── Ban User ───────────────────────────────────────────────────────────
 async function banUser() {
-  if (!confirm('Ban this user? They will lose access immediately.')) return;
-  toast('Ban feature coming soon', 'info');
+  const u = sessions.find(x => x.id === currentSession?.id)?.user;
+  if (!u?.id) { toast('No user selected', 'error'); return; }
+  const isBanned = document.getElementById('btnBan').dataset.banned === 'true';
+  const action = isBanned ? 'unban' : 'ban';
+  if (!confirm(`${action === 'ban' ? 'Ban' : 'Unban'} this user?`)) return;
+  try {
+    const r = await fetch(`/api/operator/user/${u.id}/${action}`, {
+      method: 'POST', credentials: 'include'
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast(`User ${action}ned`, 'success');
+      refreshUserInfo(u.id);
+    } else {
+      toast(data.error || 'Failed', 'error');
+    }
+  } catch(e) { toast('Error', 'error'); }
+}
+
+async function refreshUserInfo(userId) {
+  try {
+    const r = await fetch(`/api/operator/user/${userId}`, { credentials: 'include' });
+    if (!r.ok) return;
+    const u = await r.json();
+    renderUserDetails(u);
+  } catch(e) {}
+}
+
+function renderUserDetails(u) {
+  const credits = u.credits || 0;
+  const bonus = u.bonus_credits || 0;
+  const total = u.plan === 'ultra' ? '∞' : credits + bonus;
+  document.getElementById('infoCredits').textContent = total;
+
+  const totalNum = credits + bonus;
+  const bonusPct = totalNum > 0 ? Math.round((bonus / totalNum) * 100) : 0;
+  const regPct = totalNum > 0 ? Math.round((credits / totalNum) * 100) : 0;
+  document.getElementById('creditsBonus').style.width = bonusPct + '%';
+  document.getElementById('creditsRegular').style.width = regPct + '%';
+
+  const plan = u.plan || 'free';
+  const planEl = document.getElementById('infoPlan');
+  planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+  planEl.className = `plan-badge plan-${plan}`;
+
+  if (u.created_at) document.getElementById('infoJoined').textContent = formatDate(u.created_at);
+  if (u.last_login) document.getElementById('infoLastLogin').textContent = formatTime(u.last_login);
+
+  const isBanned = u.is_banned;
+  const btnBan = document.getElementById('btnBan');
+  btnBan.dataset.banned = isBanned ? 'true' : 'false';
+  btnBan.textContent = isBanned ? '✅ Unban User' : '🚫 Ban User';
+  btnBan.style.background = isBanned ? 'rgba(16,163,127,0.08)' : 'rgba(239,68,68,0.08)';
+  btnBan.style.borderColor = isBanned ? 'rgba(16,163,127,0.2)' : 'rgba(239,68,68,0.2)';
+  btnBan.style.color = isBanned ? '#10a37f' : '#f87171';
 }
 
 // ── Keyboard ───────────────────────────────────────────────────────────

@@ -710,6 +710,86 @@ def health():
     })
 
 # в”Ђв”Ђ Run в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Operator: Ban / Unban / Credits / Get User ────────────────────────
+@app.route('/api/operator/user/<int:uid>/ban', methods=['POST'])
+@operator_required
+def operator_ban_user(user, uid):
+    target = db.session.get(User, uid)
+    if not target: return jsonify({'error': 'User not found'}), 404
+    target.is_banned = True
+    db.session.commit()
+    return jsonify({'ok': True, 'user': target.to_dict()})
+
+@app.route('/api/operator/user/<int:uid>/unban', methods=['POST'])
+@operator_required
+def operator_unban_user(user, uid):
+    target = db.session.get(User, uid)
+    if not target: return jsonify({'error': 'User not found'}), 404
+    target.is_banned = False
+    db.session.commit()
+    return jsonify({'ok': True, 'user': target.to_dict()})
+
+@app.route('/api/operator/user/<int:uid>/credits', methods=['POST'])
+@operator_required
+def operator_set_credits(user, uid):
+    target = db.session.get(User, uid)
+    if not target: return jsonify({'error': 'User not found'}), 404
+    d = request.get_json(silent=True) or {}
+    amount = int(d.get('amount', 0))
+    mode = d.get('mode', 'add')  # add | set
+    if mode == 'set':
+        target.credits = max(0, amount)
+    else:
+        target.credits = max(0, (target.credits or 0) + amount)
+    db.session.commit()
+    return jsonify({'ok': True, 'user': target.to_dict()})
+
+@app.route('/api/operator/user/<int:uid>', methods=['GET'])
+@operator_required
+def operator_get_user(user, uid):
+    target = db.session.get(User, uid)
+    if not target: return jsonify({'error': 'Not found'}), 404
+    return jsonify(target.to_dict())
+
+# ── Pay: Checkout / Webhook ───────────────────────────────────────────
+@app.route('/api/pay/checkout', methods=['POST'])
+@login_required
+def pay_checkout(user):
+    d = request.get_json(silent=True) or {}
+    plan = d.get('plan', 'pro')
+    credits_map = {'starter': 100, 'pro': 500, 'max': 2000, 'ultra': -1}
+    price_map = {'starter': 99, 'pro': 299, 'max': 999, 'ultra': 1999}  # in rubles
+    if plan not in credits_map:
+        return jsonify({'error': 'Invalid plan'}), 400
+    pay_url = os.environ.get('AICHATPAY_URL', 'https://pay.aichat.ru')
+    return jsonify({
+        'url': f'{pay_url}/checkout?plan={plan}&user_id={user.id}&amount={price_map[plan]}',
+        'plan': plan,
+        'credits': credits_map[plan],
+        'price': price_map[plan]
+    })
+
+@app.route('/api/pay/webhook', methods=['POST'])
+def pay_webhook():
+    d = request.get_json(silent=True) or {}
+    secret = os.environ.get('AICHATPAY_SECRET', '')
+    if secret and d.get('secret') != secret:
+        return jsonify({'error': 'Invalid secret'}), 403
+    user_id = d.get('user_id')
+    plan = d.get('plan', 'pro')
+    credits_map = {'starter': 100, 'pro': 500, 'max': 2000, 'ultra': -1}
+    if not user_id: return jsonify({'error': 'No user_id'}), 400
+    user = db.session.get(User, int(user_id))
+    if not user: return jsonify({'error': 'User not found'}), 404
+    if plan == 'ultra':
+        user.plan = 'ultra'
+        user.credits = -1
+    else:
+        user.credits = (user.credits or 0) + credits_map.get(plan, 0)
+        user.plan = plan
+    db.session.commit()
+    return jsonify({'ok': True})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
