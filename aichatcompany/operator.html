@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -755,6 +755,7 @@ body {
 // ── State ──────────────────────────────────────────────────────────────
 let currentSession = null;
 let currentUser = null;
+let currentUserId = null;  // ID юзера текущей сессии
 let sessions = [];
 let lastMsgId = 0;
 let pollInterval = null;
@@ -866,6 +867,7 @@ async function selectSession(id) {
 
     // Topbar
     const u = sessions.find(x => x.id === id)?.user || {};
+    currentUserId = data.user_id || data.user?.id || u.id || null;  // сохраняем ID юзера
     updateTopbar(u, data);
     updateInfoPanel(u, data);
     renderMessages(data.messages || []);
@@ -883,7 +885,7 @@ async function selectSession(id) {
 }
 
 function updateTopbar(u, session) {
-  document.getElementById('topbarAvatar').textContent = getAvatar(u.username || 'U');
+  document.getElementById('topbarAvatar').innerHTML = getAvatar(u.username || 'U');
   document.getElementById('topbarName').textContent = u.username || 'Unknown User';
   document.getElementById('topbarSub').textContent = u.email || `Session #${session.id}`;
 }
@@ -892,7 +894,7 @@ function updateInfoPanel(u, session) {
   document.getElementById('infoEmpty').style.display = 'none';
   document.getElementById('infoPanel').style.display = 'flex';
 
-  document.getElementById('infoAvatar').textContent = getAvatar(u.username || 'U');
+  document.getElementById('infoAvatar').innerHTML = getAvatar(u.username || 'U');
   document.getElementById('infoName').textContent = u.username || 'Unknown';
   document.getElementById('infoEmail').textContent = u.email || '—';
   document.getElementById('infoSessionId').textContent = `#${session.id}`;
@@ -1068,19 +1070,18 @@ async function giveCredits(mode = 'add') {
   const input = document.getElementById('giveCreditsInput');
   const amount = parseInt(input.value);
   if (!amount || amount < 1) { toast('Enter a valid amount', 'error'); return; }
-  const u = sessions.find(x => x.id === currentSession?.id)?.user;
-  if (!u?.id) { toast('No user selected', 'error'); return; }
+  if (!currentUserId) { toast('No user selected', 'error'); return; }
   try {
-    const r = await fetch(`/api/operator/user/${u.id}/credits`, {
+    const r = await fetch(`/api/operator/user/${currentUserId}/credits`, {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount, mode })
     });
     const data = await r.json();
     if (data.ok) {
-      toast(`Credits ${mode === 'set' ? 'set to' : 'added:'} ${amount}`, 'success');
+      toast(`Credits ${mode === 'set' ? 'set to ' + amount : 'added: +' + amount}`, 'success');
       input.value = '';
-      refreshUserInfo(u.id);
+      refreshUserInfo(currentUserId);
     } else {
       toast(data.error || 'Failed', 'error');
     }
@@ -1089,19 +1090,18 @@ async function giveCredits(mode = 'add') {
 
 // ── Ban User ───────────────────────────────────────────────────────────
 async function banUser() {
-  const u = sessions.find(x => x.id === currentSession?.id)?.user;
-  if (!u?.id) { toast('No user selected', 'error'); return; }
+  if (!currentUserId) { toast('No user selected', 'error'); return; }
   const isBanned = document.getElementById('btnBan').dataset.banned === 'true';
   const action = isBanned ? 'unban' : 'ban';
   if (!confirm(`${action === 'ban' ? 'Ban' : 'Unban'} this user?`)) return;
   try {
-    const r = await fetch(`/api/operator/user/${u.id}/${action}`, {
+    const r = await fetch(`/api/operator/user/${currentUserId}/${action}`, {
       method: 'POST', credentials: 'include'
     });
     const data = await r.json();
     if (data.ok) {
-      toast(`User ${action}ned`, 'success');
-      refreshUserInfo(u.id);
+      toast(`User ${action === 'ban' ? 'banned' : 'unbanned'}`, 'success');
+      refreshUserInfo(currentUserId);
     } else {
       toast(data.error || 'Failed', 'error');
     }
@@ -1164,8 +1164,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function getAvatar(name) {
-  const emojis = ['🦊','🐺','🦁','🐯','🐻','🦝','🐼','🦄','🐸','🦋'];
-  const idx = (name || 'U').charCodeAt(0) % emojis.length;
+  const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff6bcd','#a855f7','#f97316','#06b6d4'];
+  const idx = (name || 'U').charCodeAt(0) % colors.length;
+  const c = colors[idx];
+  const letter = (name || 'U')[0].toUpperCase();
+  return `<svg width="100%" height="100%" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="28" cy="28" r="28" fill="${c}22"/>
+    <circle cx="28" cy="22" r="11" fill="${c}"/>
+    <ellipse cx="28" cy="44" rx="16" ry="10" fill="${c}"/>
+    <circle cx="28" cy="22" r="11" fill="${c}" opacity="0.9"/>
+    <text x="28" y="27" text-anchor="middle" font-size="13" font-weight="900" fill="white" font-family="system-ui">${letter}</text>
+  </svg>`;
+}
   return emojis[idx];
 }
 

@@ -123,6 +123,7 @@ class ChatSession(db.Model):
     def to_dict(self, include_messages=False):
         d = {
             'id': self.id, 'session_key': self.session_key,
+            'user_id': self.user_id,
             'operator_on': self.operator_on,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
@@ -556,7 +557,11 @@ def operator_sessions(user):
 def operator_get_session(user, sid):
     sess = db.session.get(ChatSession, sid)
     if not sess: return jsonify({'error': 'Not found'}), 404
-    return jsonify(sess.to_dict(include_messages=True))
+    d = sess.to_dict(include_messages=True)
+    u = db.session.get(User, sess.user_id)
+    d['user_id'] = sess.user_id
+    d['user'] = u.to_dict() if u else None
+    return jsonify(d)
 
 @app.route('/api/operator/takeover', methods=['POST'])
 @operator_required
