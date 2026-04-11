@@ -220,66 +220,12 @@ def server_error(e):
 # в”Ђв”Ђ Auth: Register в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/register', methods=['POST'])
 def register():
-    ip = request.remote_addr
-    if not rate_limit(f'reg:{ip}', 5, 300):
-        return jsonify({'error': 'Too many requests. Try again later.'}), 429
+    return jsonify({'error': 'Email registration disabled. Use Nomchat ID.'}), 403
 
-    d = request.get_json(silent=True) or {}
-    email    = d.get('email', '').strip().lower()
-    username = d.get('username', '').strip()
-    password = d.get('password', '')
-
-    if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-        return jsonify({'error': 'Invalid email address'}), 400
-    if not username or len(username) < 2 or len(username) > 50:
-        return jsonify({'error': 'Username must be 2вЂ“50 characters'}), 400
-    if not password or len(password) < 6:
-        return jsonify({'error': 'Password must be at least 6 characters'}), 400
-    if User.query.filter_by(email=email).first():
-        return jsonify({'error': 'Email already registered'}), 400
-
-    try:
-        user = User(email=email, username=username, last_login=datetime.utcnow())
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        session.clear()
-        session['user_id'] = user.id
-        session.permanent = True
-        return jsonify({'success': True, 'user': user.to_dict()})
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f'Register error: {e}')
-        return jsonify({'error': 'Registration failed. Please try again.'}), 500
-
-# в”Ђв”Ђ Auth: Login в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    ip = request.remote_addr
-    if not rate_limit(f'login:{ip}', 10, 300):
-        return jsonify({'error': 'Too many attempts. Try again later.'}), 429
+    return jsonify({'error': 'Email login disabled. Use Nomchat ID.'}), 403
 
-    d = request.get_json(silent=True) or {}
-    email    = d.get('email', '').strip().lower()
-    password = d.get('password', '')
-
-    if not email or not password:
-        return jsonify({'error': 'Email and password required'}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user or not user.check_password(password):
-        return jsonify({'error': 'Invalid email or password'}), 401
-    if user.is_banned:
-        return jsonify({'error': 'Account banned'}), 403
-
-    user.last_login = datetime.utcnow()
-    db.session.commit()
-    session.clear()
-    session['user_id'] = user.id
-    session.permanent = True
-    return jsonify({'success': True, 'user': user.to_dict()})
-
-# в”Ђв”Ђ Auth: Nomchat OAuth в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 @app.route('/api/auth/nomchat', methods=['POST'])
 def nomchat_auth():
     d = request.get_json(silent=True) or {}
@@ -794,6 +740,25 @@ def pay_webhook():
         user.plan = plan
     db.session.commit()
     return jsonify({'ok': True})
+
+# ── Reset all users (operator only) ──────────────────────────────────
+@app.route('/api/operator/reset-all-users', methods=['POST'])
+@operator_required
+def reset_all_users(user):
+    d = request.get_json(silent=True) or {}
+    if d.get('confirm') != 'RESET_ALL':
+        return jsonify({'error': 'Send confirm: RESET_ALL'}), 400
+    try:
+        count = User.query.count()
+        # Delete all sessions and messages first
+        ChatMessage.query.delete()
+        ChatSession.query.delete()
+        User.query.delete()
+        db.session.commit()
+        return jsonify({'ok': True, 'deleted': count})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

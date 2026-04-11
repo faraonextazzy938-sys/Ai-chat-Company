@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign In — AI Chat Company</title>
 <link rel="stylesheet" href="style.css">
-<meta name="description" content="Sign in or create your AI Chat Company account. Get 50 free credits on signup.">
 </head>
 <body>
 <div class="grid-bg"></div>
@@ -13,7 +12,6 @@
 <div class="glow-orb glow-orb-1"></div>
 <div class="glow-orb glow-orb-2"></div>
 
-<!-- Header -->
 <header class="header" id="header">
   <div class="header-inner">
     <a href="/" class="logo">
@@ -28,401 +26,101 @@
       <a href="/" class="nav-link">Home</a>
       <a href="/features.html" class="nav-link">Features</a>
     </nav>
-    <div class="header-actions">
-      <a href="/login.html" class="btn-signup">Get Started</a>
-    </div>
   </div>
 </header>
 
-<!-- Login Page -->
 <main class="login-page">
-  <div class="login-card">
-    <!-- Logo -->
+  <div class="login-card" style="max-width:400px; text-align:center;">
+
     <div class="login-logo">
-      <div class="login-logo-mark">💬</div>
+      <div class="login-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" width="22" height="22">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
       <span class="login-logo-text">AI Chat Co.</span>
     </div>
 
-    <!-- Alert area -->
     <div id="login-alert" style="display:none; margin-bottom:16px;"></div>
 
-    <!-- Tabs -->
-    <div class="login-tabs" role="tablist">
-      <button class="login-tab active" id="tab-signin" role="tab" aria-selected="true" onclick="switchTab('signin')">Sign in</button>
-      <button class="login-tab" id="tab-register" role="tab" aria-selected="false" onclick="switchTab('register')">Register</button>
+    <div class="login-title">Welcome</div>
+    <p class="login-subtitle" style="margin-bottom:32px;">Sign in with your Nomchat ID to access AI Chat Company. Your chats, credits and settings are saved to your account.</p>
+
+    <button class="nomchat-login-btn" onclick="nomchatLogin()" style="width:100%; padding:16px; font-size:15px; justify-content:center;">
+      <span class="nomchat-login-btn-icon">🔑</span>
+      <span class="nomchat-login-btn-text">
+        <span class="nomchat-login-btn-label">Continue with</span>
+        <span class="nomchat-login-btn-brand">NOMCHAT ID</span>
+      </span>
+    </button>
+
+    <div class="login-credits-note" style="margin-top:24px;">
+      🎁 New accounts get <strong>50 free credits</strong> + <strong>300 bonus credits</strong> instantly
     </div>
 
-    <!-- Sign In Form -->
-    <form class="login-form" id="signin-form" novalidate>
-      <div class="login-title" id="form-title">Welcome back</div>
-      <p class="login-subtitle" id="form-subtitle">Sign in to your account to continue</p>
-
-      <div class="form-group">
-        <label class="form-label" for="signin-email">Email address</label>
-        <input class="form-input" type="email" id="signin-email" name="email"
-          placeholder="you@example.com" autocomplete="email" required>
-        <span class="form-error" id="signin-email-err" style="display:none;"></span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="signin-password">Password</label>
-        <input class="form-input" type="password" id="signin-password" name="password"
-          placeholder="Your password" autocomplete="current-password" required>
-        <span class="form-error" id="signin-password-err" style="display:none;"></span>
-      </div>
-
-      <button type="submit" class="login-submit-btn" id="signin-btn">
-        <span id="signin-btn-text">Sign in</span>
-      </button>
-
-      <div class="login-divider"><span>or continue with</span></div>
-
-      <button type="button" class="nomchat-login-btn" id="nomchat-signin-btn" onclick="nomchatLogin()">
-        <span class="nomchat-login-btn-icon">🌐</span>
-        <span class="nomchat-login-btn-text">
-          <span class="nomchat-login-btn-label">Continue with</span>
-          <span class="nomchat-login-btn-brand">NOMCHAT ID</span>
-        </span>
-      </button>
-
-      <p class="login-footer">
-        Don't have an account?
-        <a href="#" onclick="switchTab('register'); return false;">Create one free</a>
-      </p>
-    </form>
-
-    <!-- Register Form -->
-    <form class="login-form" id="register-form" novalidate style="display:none;">
-      <div class="login-title">Create account</div>
-      <p class="login-subtitle">Get 50 free credits on signup</p>
-
-      <div class="form-group">
-        <label class="form-label" for="reg-username">Username</label>
-        <input class="form-input" type="text" id="reg-username" name="username"
-          placeholder="Your display name" autocomplete="username" required minlength="2" maxlength="50">
-        <span class="form-error" id="reg-username-err" style="display:none;"></span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="reg-email">Email address</label>
-        <input class="form-input" type="email" id="reg-email" name="email"
-          placeholder="you@example.com" autocomplete="email" required>
-        <span class="form-error" id="reg-email-err" style="display:none;"></span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="reg-password">Password</label>
-        <input class="form-input" type="password" id="reg-password" name="password"
-          placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
-        <span class="form-error" id="reg-password-err" style="display:none;"></span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="reg-confirm">Confirm password</label>
-        <input class="form-input" type="password" id="reg-confirm" name="confirm"
-          placeholder="Repeat your password" autocomplete="new-password" required>
-        <span class="form-error" id="reg-confirm-err" style="display:none;"></span>
-      </div>
-
-      <button type="submit" class="login-submit-btn" id="register-btn">
-        <span id="register-btn-text">Create account</span>
-      </button>
-
-      <div class="login-divider"><span>or sign up with</span></div>
-
-      <button type="button" class="nomchat-login-btn" onclick="nomchatLogin()">
-        <span class="nomchat-login-btn-icon">🌐</span>
-        <span class="nomchat-login-btn-text">
-          <span class="nomchat-login-btn-label">Sign up with</span>
-          <span class="nomchat-login-btn-brand">NOMCHAT ID</span>
-        </span>
-      </button>
-
-      <p class="login-footer">
-        Already have an account?
-        <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>
-      </p>
-    </form>
-
-    <!-- Credits note -->
-    <div class="login-credits-note">
-      🎁 New accounts receive <strong>50 free credits</strong> + <strong>300 bonus credits</strong> to explore all features.
-    </div>
+    <p style="margin-top:20px; font-size:12px; color:var(--text3); line-height:1.6;">
+      Don't have a Nomchat ID?
+      <a href="https://nomchat-id.up.railway.app" target="_blank" style="color:var(--c); font-weight:600;">Create one free →</a>
+    </p>
   </div>
 </main>
 
-<!-- Footer -->
-<footer style="text-align:center; padding: 24px; position:relative; z-index:2;">
-  <p style="font-size:13px; color:var(--text3);">
-    By signing in, you agree to our
-    <a href="#" style="color:var(--c);">Terms of Service</a> and
-    <a href="#" style="color:var(--c);">Privacy Policy</a>.
-  </p>
-</footer>
-
 <script>
-'use strict';
+window.addEventListener('scroll', () => {
+  document.getElementById('header')?.classList.toggle('scrolled', window.scrollY > 10);
+}, { passive: true });
 
-// ── Tab Switching ──────────────────────────────────────────────────────
-function switchTab(tab) {
-  const signinForm = document.getElementById('signin-form');
-  const registerForm = document.getElementById('register-form');
-  const tabSignin = document.getElementById('tab-signin');
-  const tabRegister = document.getElementById('tab-register');
+// Already logged in? Redirect
+(async () => {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    if (r.ok) window.location.href = '/chat.html';
+  } catch(e) {}
+})();
 
-  clearAlert();
-
-  if (tab === 'signin') {
-    signinForm.style.display = 'flex';
-    registerForm.style.display = 'none';
-    tabSignin.classList.add('active');
-    tabRegister.classList.remove('active');
-    tabSignin.setAttribute('aria-selected', 'true');
-    tabRegister.setAttribute('aria-selected', 'false');
-  } else {
-    signinForm.style.display = 'none';
-    registerForm.style.display = 'flex';
-    tabSignin.classList.remove('active');
-    tabRegister.classList.add('active');
-    tabSignin.setAttribute('aria-selected', 'false');
-    tabRegister.setAttribute('aria-selected', 'true');
-  }
-}
-
-// ── Alert helpers ──────────────────────────────────────────────────────
 function showAlert(msg, type = 'error') {
   const el = document.getElementById('login-alert');
-  if (!el) return;
   el.className = `login-alert ${type}`;
   el.textContent = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
   el.style.display = 'flex';
 }
 
-function clearAlert() {
-  const el = document.getElementById('login-alert');
-  if (el) el.style.display = 'none';
-}
-
-function showFieldError(id, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = 'flex';
-  const input = el.previousElementSibling;
-  if (input) input.classList.add('error');
-}
-
-function clearFieldErrors() {
-  document.querySelectorAll('.form-error').forEach(el => {
-    el.style.display = 'none';
-    el.textContent = '';
-  });
-  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
-}
-
-function setLoading(btnId, textId, loading, text) {
-  const btn = document.getElementById(btnId);
-  const span = document.getElementById(textId);
-  if (!btn || !span) return;
-  btn.disabled = loading;
-  span.innerHTML = loading
-    ? '<span class="loading-spinner"></span>'
-    : text;
-}
-
-// ── Validation ─────────────────────────────────────────────────────────
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ── Sign In ────────────────────────────────────────────────────────────
-document.getElementById('signin-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearFieldErrors();
-  clearAlert();
-
-  const email = document.getElementById('signin-email').value.trim();
-  const password = document.getElementById('signin-password').value;
-  let valid = true;
-
-  if (!email) {
-    showFieldError('signin-email-err', 'Email is required');
-    valid = false;
-  } else if (!validateEmail(email)) {
-    showFieldError('signin-email-err', 'Enter a valid email address');
-    valid = false;
-  }
-  if (!password) {
-    showFieldError('signin-password-err', 'Password is required');
-    valid = false;
-  }
-  if (!valid) return;
-
-  setLoading('signin-btn', 'signin-btn-text', true);
-
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showAlert(data.error || 'Invalid email or password');
-      return;
-    }
-
-    showAlert('Signed in successfully! Redirecting...', 'success');
-    setTimeout(() => { window.location.href = '/chat.html'; }, 800);
-
-  } catch (err) {
-    showAlert('Network error. Please check your connection.');
-  } finally {
-    setLoading('signin-btn', 'signin-btn-text', false, 'Sign in');
-  }
-});
-
-// ── Register ───────────────────────────────────────────────────────────
-document.getElementById('register-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearFieldErrors();
-  clearAlert();
-
-  const username = document.getElementById('reg-username').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const confirm = document.getElementById('reg-confirm').value;
-  let valid = true;
-
-  if (!username || username.length < 2) {
-    showFieldError('reg-username-err', 'Username must be at least 2 characters');
-    valid = false;
-  }
-  if (!email) {
-    showFieldError('reg-email-err', 'Email is required');
-    valid = false;
-  } else if (!validateEmail(email)) {
-    showFieldError('reg-email-err', 'Enter a valid email address');
-    valid = false;
-  }
-  if (!password || password.length < 6) {
-    showFieldError('reg-password-err', 'Password must be at least 6 characters');
-    valid = false;
-  }
-  if (password !== confirm) {
-    showFieldError('reg-confirm-err', 'Passwords do not match');
-    valid = false;
-  }
-  if (!valid) return;
-
-  setLoading('register-btn', 'register-btn-text', true);
-
-  try {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ username, email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showAlert(data.error || 'Registration failed. Please try again.');
-      return;
-    }
-
-    showAlert('Account created! Redirecting to chat...', 'success');
-    setTimeout(() => { window.location.href = '/chat.html'; }, 900);
-
-  } catch (err) {
-    showAlert('Network error. Please check your connection.');
-  } finally {
-    setLoading('register-btn', 'register-btn-text', false, 'Create account');
-  }
-});
-
-// ── Nomchat OAuth ──────────────────────────────────────────────────────
-function nomchatLogin() {
+async function nomchatLogin() {
   const NOMCHAT_URL = 'https://nomchat-id.up.railway.app';
   const popup = window.open(
     `${NOMCHAT_URL}/oauth.html?app_id=ai-chat-pro&redirect=${encodeURIComponent(window.location.origin + '/login.html')}`,
-    'nomchat-oauth',
-    'width=480,height=640,scrollbars=yes,resizable=yes'
+    'nomchat-oauth', 'width=480,height=640,scrollbars=yes'
   );
 
-  if (!popup) {
-    showAlert('Popup blocked. Please allow popups for this site.');
-    return;
-  }
+  if (!popup) { showAlert('Popup blocked. Please allow popups for this site.'); return; }
 
   const handler = async (e) => {
     if (e.origin !== NOMCHAT_URL) return;
     const { token, error } = e.data || {};
-
-    if (error) {
-      showAlert(error);
-      window.removeEventListener('message', handler);
-      return;
-    }
-
+    if (error) { showAlert(error); window.removeEventListener('message', handler); return; }
     if (token) {
       window.removeEventListener('message', handler);
       popup.close();
-      clearAlert();
-
       try {
-        const res = await fetch('/api/auth/nomchat', {
-          method: 'POST',
+        const r = await fetch('/api/auth/nomchat', {
+          method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ token })
         });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          showAlert(data.error || 'Nomchat authentication failed.');
-          return;
+        const d = await r.json();
+        if (r.ok) {
+          showAlert('Signed in! Redirecting...', 'success');
+          setTimeout(() => window.location.href = '/chat.html', 800);
+        } else {
+          showAlert(d.error || 'Authentication failed.');
         }
-
-        showAlert('Signed in with Nomchat ID! Redirecting...', 'success');
-        setTimeout(() => { window.location.href = '/chat.html'; }, 800);
-
-      } catch (err) {
-        showAlert('Network error during Nomchat authentication.');
-      }
+      } catch(e) { showAlert('Network error.'); }
     }
   };
 
   window.addEventListener('message', handler);
-
-  // Cleanup if popup closed without completing
-  const checkClosed = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(checkClosed);
-      window.removeEventListener('message', handler);
-    }
-  }, 500);
+  const check = setInterval(() => { if (popup.closed) { clearInterval(check); window.removeEventListener('message', handler); } }, 500);
 }
-
-// ── Header scroll ──────────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  document.getElementById('header')?.classList.toggle('scrolled', window.scrollY > 10);
-}, { passive: true });
-
-// ── Check if already logged in ─────────────────────────────────────────
-(async () => {
-  try {
-    const res = await fetch('/api/auth/me', { credentials: 'include' });
-    if (res.ok) {
-      window.location.href = '/chat.html';
-    }
-  } catch (e) {}
-})();
 </script>
 </body>
 </html>
