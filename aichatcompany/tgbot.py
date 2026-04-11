@@ -10,8 +10,8 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger(__name__)
 
-TG_TOKEN       = os.environ.get('TG_TOKEN', '')
-OPENROUTER_KEY = os.environ.get('OPENROUTER_KEY', '') or os.environ.get('GROQ_API', '')
+TG_TOKEN       = '8326227335:AAGKxguIxbuyBcXyXtsfDVtpbL0l4QMWOv8'
+OPENROUTER_KEY = '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'
 OR_URL         = 'https://openrouter.ai/api/v1/chat/completions'
 DEFAULT_MODEL  = 'meta-llama/llama-3.3-70b-instruct'
 MAX_HISTORY    = 20
