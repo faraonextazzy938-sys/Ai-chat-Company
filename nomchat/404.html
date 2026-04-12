@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — NomChat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0f;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb1{width:400px;height:400px;background:radial-gradient(circle,rgba(91,110,245,.12),transparent);top:-100px;right:-100px}
+.orb2{width:300px;height:300px;background:radial-gradient(circle,rgba(245,158,11,.08),transparent);bottom:-50px;left:-50px}
+.card{position:relative;z-index:1;text-align:center;max-width:480px;width:100%}
+.logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:48px;text-decoration:none}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:22px;height:22px;stroke:#000;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.logo-text{font-size:1.3rem;font-weight:900}
+.logo-text span{color:#f59e0b}
+.num{font-size:clamp(6rem,20vw,10rem);font-weight:900;letter-spacing:-4px;line-height:1;background:linear-gradient(135deg,#5b6ef5,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+h1{font-size:1.5rem;font-weight:800;margin-bottom:12px}
+p{color:#6b7280;font-size:.95rem;line-height:1.7;margin-bottom:36px}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-home{padding:12px 24px;background:linear-gradient(135deg,#5b6ef5,#4355e8);color:#fff;font-size:.9rem;font-weight:700;border-radius:10px;text-decoration:none;transition:all .2s;box-shadow:0 0 20px rgba(91,110,245,.3)}
+.btn-home:hover{box-shadow:0 4px 28px rgba(91,110,245,.5);transform:translateY(-2px)}
+.btn-back{padding:12px 24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#9ca3af;font-size:.9rem;font-weight:600;border-radius:10px;text-decoration:none;transition:all .2s;cursor:pointer}
+.btn-back:hover{background:rgba(255,255,255,.1);color:#fff}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="card">
+  <a href="/" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <span class="logo-text">Nom<span>Chat</span></span>
+  </a>
+
+  <div class="num">404</div>
+  <h1>Page not found</h1>
+  <p>The page you're looking for doesn't exist or has been moved. Let's get you back on track.</p>
+
+  <div class="actions">
+    <a href="/" class="btn-home">Go home</a>
+    <a href="#" class="btn-back" onclick="history.back();return false;">Go back</a>
+  </div>
+</div>
+</body>
+</html>

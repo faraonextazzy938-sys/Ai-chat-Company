@@ -1,74 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maintenance — Nomchat ID</title>
-    <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-body {
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
-    background:#0a0a0f; color:#f0f0ff; min-height:100vh;
-    display:flex; align-items:center; justify-content:center; padding:24px;
-    overflow:hidden;
-}
-body::before {
-    content:''; position:fixed; inset:0;
-    background:radial-gradient(ellipse 700px 500px at 50% 40%, rgba(245,158,11,0.07) 0%, transparent 70%);
-    pointer-events:none;
-}
-.card {
-    max-width:560px; width:100%;
-    background:rgba(15,15,26,0.95);
-    border:1px solid rgba(245,158,11,0.2);
-    border-radius:24px; padding:52px 40px;
-    text-align:center; position:relative; z-index:1;
-    box-shadow:0 0 0 1px rgba(245,158,11,0.08), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(245,158,11,0.05);
-    animation:appear 0.5s ease;
-}
-@keyframes appear { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-
-.icon { font-size:4em; margin-bottom:20px; display:block; animation:spin 4s linear infinite; }
-@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-
-.badge {
-    display:inline-block; padding:5px 14px; border-radius:99px;
-    background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3);
-    color:#f59e0b; font-size:0.75em; font-weight:800;
-    letter-spacing:2px; text-transform:uppercase; margin-bottom:20px;
-}
-h1 { font-size:1.8em; font-weight:900; margin-bottom:10px; }
-.sub { color:rgba(240,240,255,0.5); font-size:0.95em; line-height:1.7; margin-bottom:36px; }
-
-.progress-wrap { background:rgba(255,255,255,0.06); border-radius:99px; height:6px; margin-bottom:36px; overflow:hidden; }
-.progress-bar {
-    height:100%; border-radius:99px;
-    background:linear-gradient(90deg,#f59e0b,#ef4444,#f59e0b);
-    background-size:200% 100%;
-    animation:progress 2s linear infinite;
-    width:60%;
-}
-@keyframes progress { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
-
-.logo { display:inline-flex; align-items:center; gap:8px; text-decoration:none; opacity:0.4; transition:opacity 0.2s; }
-.logo:hover { opacity:0.7; }
-.logo-icon { font-size:1.2em; }
-.logo-name { font-weight:900; font-size:0.9em; color:#f0f0ff; letter-spacing:1px; }
-.logo-badge { background:#f59e0b; color:#000; font-size:0.55em; font-weight:900; padding:2px 6px; border-radius:4px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NomChat — Under Maintenance</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--gold:#f59e0b;--purple:#5b6ef5;--white:#fff;--muted:#6b7280}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb1{width:400px;height:400px;background:radial-gradient(circle,rgba(245,158,11,.12),transparent);top:-100px;left:-100px}
+.orb2{width:350px;height:350px;background:radial-gradient(circle,rgba(91,110,245,.1),transparent);bottom:-100px;right:-100px}
+.card{position:relative;z-index:1;text-align:center;max-width:520px;width:100%}
+.logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:48px;text-decoration:none}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#d97706);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(245,158,11,.4)}
+.logo-icon svg{width:24px;height:24px;stroke:#000;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.logo-text{font-size:1.4rem;font-weight:900;letter-spacing:-.5px}
+.logo-text span{color:var(--gold)}
+.icon-wrap{width:96px;height:96px;border-radius:50%;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 32px;animation:iconPulse 3s ease-in-out infinite}
+@keyframes iconPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.3)}50%{box-shadow:0 0 0 16px rgba(245,158,11,0)}}
+.icon-wrap svg{width:44px;height:44px;stroke:var(--gold);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;letter-spacing:-.5px;margin-bottom:16px;line-height:1.2}
+.subtitle{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:40px;max-width:400px;margin-left:auto;margin-right:auto}
+.docs-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;font-size:.95rem;font-weight:700;border-radius:12px;text-decoration:none;transition:all .2s;box-shadow:0 0 24px rgba(245,158,11,.3)}
+.docs-btn:hover{box-shadow:0 4px 32px rgba(245,158,11,.5);transform:translateY(-2px)}
+.docs-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.status{margin-top:40px;display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:99px;padding:8px 18px;font-size:.8rem;color:var(--gold)}
+.status-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.lang-note{margin-top:16px;font-size:.75rem;color:#444}
+</style>
 </head>
 <body>
+<div class="grid-bg"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
 <div class="card">
-    <span class="icon">⚙️</span>
-    <div class="badge">Maintenance</div>
-    <h1>We'll be right back</h1>
-    <p class="sub">Nomchat ID is currently undergoing scheduled maintenance. We're working hard to improve your experience. Please check back soon.</p>
-    <div class="progress-wrap"><div class="progress-bar"></div></div>
-    <a href="/" class="logo">
-        <span class="logo-icon">💬</span>
-        <span class="logo-name">NOMCHAT</span>
-        <span class="logo-badge">ID</span>
-    </a>
+  <a href="#" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <span class="logo-text">Nom<span>Chat</span></span>
+  </a>
+
+  <div class="icon-wrap">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+  </div>
+
+  <h1 id="title">This service is under maintenance</h1>
+  <p class="subtitle" id="subtitle">We're working hard to improve NomChat. The service will be back soon. Thank you for your patience.</p>
+
+  <a href="https://nomchat-id.up.railway.app/docs/maintenance.html" class="docs-btn">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Learn more
+  </a>
+
+  <div class="status">
+    <span class="status-dot"></span>
+    <span id="status-text">Maintenance in progress</span>
+  </div>
+
+  <div class="lang-note" id="lang-note"></div>
 </div>
+
+<script>
+const LANGS = {
+  ru: {
+    title: 'Сервис находится на переработке',
+    subtitle: 'Мы активно работаем над улучшением NomChat. Сервис скоро вернётся. Спасибо за терпение.',
+    btn: 'Подробнее',
+    status: 'Идут технические работы',
+    note: '🇷🇺 Русский'
+  },
+  en: {
+    title: 'This service is under maintenance',
+    subtitle: "We're working hard to improve NomChat. The service will be back soon. Thank you for your patience.",
+    btn: 'Learn more',
+    status: 'Maintenance in progress',
+    note: '🇬🇧 English'
+  },
+  de: {
+    title: 'Dieser Dienst wird gewartet',
+    subtitle: 'Wir arbeiten hart daran, NomChat zu verbessern. Der Dienst wird bald zurück sein.',
+    btn: 'Mehr erfahren',
+    status: 'Wartung läuft',
+    note: '🇩🇪 Deutsch'
+  },
+  fr: {
+    title: 'Ce service est en maintenance',
+    subtitle: 'Nous travaillons dur pour améliorer NomChat. Le service sera bientôt de retour.',
+    btn: 'En savoir plus',
+    status: 'Maintenance en cours',
+    note: '🇫🇷 Français'
+  },
+  es: {
+    title: 'Este servicio está en mantenimiento',
+    subtitle: 'Estamos trabajando para mejorar NomChat. El servicio volverá pronto.',
+    btn: 'Más información',
+    status: 'Mantenimiento en progreso',
+    note: '🇪🇸 Español'
+  },
+  zh: {
+    title: '该服务正在维护中',
+    subtitle: '我们正在努力改进 NomChat，服务即将恢复。感谢您的耐心等待。',
+    btn: '了解更多',
+    status: '维护进行中',
+    note: '🇨🇳 中文'
+  },
+  ja: {
+    title: 'このサービスはメンテナンス中です',
+    subtitle: 'NomChatの改善に取り組んでいます。まもなく復旧します。',
+    btn: '詳細を見る',
+    status: 'メンテナンス中',
+    note: '🇯🇵 日本語'
+  },
+};
+
+const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+const t = LANGS[lang] || LANGS.en;
+
+document.getElementById('title').textContent = t.title;
+document.getElementById('subtitle').textContent = t.subtitle;
+document.getElementById('status-text').textContent = t.status;
+document.querySelector('.docs-btn').childNodes[2].textContent = ' ' + t.btn;
+if (lang !== 'en') document.getElementById('lang-note').textContent = t.note;
+</script>
 </body>
 </html>
