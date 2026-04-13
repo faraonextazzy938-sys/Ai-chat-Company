@@ -1,76 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NomChat Maintenance — Docs</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NomChat — Under Maintenance</title>
+    <link rel="stylesheet" href="/docs/style.css">
 </head>
 <body>
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <span class="logo-icon">📚</span>
-    <span class="logo-name">NOMCHAT</span>
-    <span class="logo-badge">DOCS</span>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">General</div>
-    <a href="index.html" class="nav-link">Overview</a>
-    <div class="nav-section">Status</div>
-    <a href="maintenance.html" class="nav-link active">Maintenance Notice</a>
-    <a href="aichat-closed.html" class="nav-link">AI Chat Company</a>
-    <div class="nav-section">API</div>
-    <a href="api-auth.html" class="nav-link">Auth API</a>
-    <a href="api-users.html" class="nav-link">Users API</a>
-  </nav>
-  <div class="sidebar-footer">
-    <a href="/" class="back-link">← Back to NomChat</a>
-  </div>
-</aside>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">💬</span>
+            <span class="logo-name">NOMCHAT</span>
+            <span class="logo-badge">DOCS</span>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section">Overview</div>
+            <a href="/docs/index.html" class="nav-link">Introduction</a>
+            <a href="/docs/maintenance.html" class="nav-link active">Maintenance Notice</a>
+            <a href="/docs/cookies.html" class="nav-link">Cookie Policy</a>
+            <a href="/docs/privacy.html" class="nav-link">Privacy Policy</a>
+            <a href="/docs/terms.html" class="nav-link">Terms of Service</a>
+            <div class="nav-section">API</div>
+            <a href="/docs/api-auth.html" class="nav-link">Authentication</a>
+            <a href="/docs/api-users.html" class="nav-link">Users</a>
+            <a href="/docs/api-reports.html" class="nav-link">Reports</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="https://nomchat-id.up.railway.app" target="_blank" class="back-link">← Back to Nomchat ID</a>
+        </div>
+    </nav>
 
-<main class="content">
-  <div class="content-inner">
-    <div class="breadcrumb">Status → Maintenance Notice</div>
+    <main class="content">
+        <div class="content-inner">
+            <div class="breadcrumb">Overview</div>
+            <h1>🔧 Under Maintenance</h1>
+            <p class="lead">NomChat is currently undergoing a major rework. Some services may be temporarily unavailable.</p>
 
-    <h1>NomChat — Under Maintenance</h1>
-    <p class="lead">NomChat is currently undergoing a major rework. The service is temporarily unavailable while we rebuild it from the ground up.</p>
+            <div class="warning-box">
+                <strong>⚠️ Service temporarily unavailable</strong>
+                <p>The main NomChat platform is offline while we rebuild it from the ground up. We appreciate your patience during this time.</p>
+            </div>
 
-    <div class="warning-box">
-      <strong>⚠️ Service Unavailable</strong>
-      <p>NomChat is not accepting new connections at this time. All existing sessions have been paused.</p>
-    </div>
+            <h2>What's happening?</h2>
+            <p>We're doing a complete overhaul of the NomChat platform — new architecture, improved performance, and a redesigned experience across all connected services. This is a major rework that touches nearly every part of the system.</p>
+            <p>During this period, the main NomChat interface is not accessible. We're working as fast as we can to bring everything back online better than before.</p>
 
-    <h2>What's happening</h2>
-    <p>We are performing a complete architectural overhaul of the NomChat platform. This includes:</p>
-    <ul>
-      <li>Full backend rewrite for better performance and reliability</li>
-      <li>New real-time messaging infrastructure</li>
-      <li>Improved NomChat ID integration across all services</li>
-      <li>Enhanced security and privacy features</li>
-      <li>New UI/UX design system</li>
-    </ul>
+            <h2>What still works?</h2>
+            <p>The following services remain fully operational during maintenance:</p>
 
-    <h2>What this means for you</h2>
-    <p>During the maintenance period:</p>
-    <ul>
-      <li>NomChat web app is unavailable</li>
-      <li>NomChat ID authentication still works for connected apps (AI Chat Company, hQd Pays)</li>
-      <li>Your account data is safe and will be preserved</li>
-      <li>API endpoints for third-party apps remain operational</li>
-    </ul>
+            <div class="cards-grid">
+                <a href="/docs/api-auth.html" class="doc-card">
+                    <div class="doc-card-icon">🔑</div>
+                    <h3>NomChat ID Auth API</h3>
+                    <p>Authentication endpoints are live. Apps can still sign users in.</p>
+                </a>
+                <a href="https://hqdpays.up.railway.app" target="_blank" class="doc-card">
+                    <div class="doc-card-icon">💳</div>
+                    <h3>hQd Pays</h3>
+                    <p>Payment infrastructure is unaffected and processing normally.</p>
+                </a>
+                <a href="https://aichatcompany.up.railway.app" target="_blank" class="doc-card">
+                    <div class="doc-card-icon">🤖</div>
+                    <h3>AI Chat Company</h3>
+                    <p>AI chat services are running independently and fully available.</p>
+                </a>
+            </div>
 
-    <h2>Services still available</h2>
-    <div class="info-box">
-      <strong>✅ Still working</strong>
-      <p>NomChat ID login, token verification API, hQd Pays, AI Chat Company, and all documentation remain fully operational.</p>
-    </div>
+            <h2>Timeline</h2>
+            <p>We don't have a fixed date yet — we'd rather take the time to do this right than rush a broken release. Follow our updates for the latest news.</p>
 
-    <h2>Expected timeline</h2>
-    <p>We don't have a fixed date yet — we want to get it right rather than rush it. Follow our updates in the docs or check back here for the latest status.</p>
+            <div class="info-box">
+                <strong>📢 Coming soon</strong>
+                <p>The new NomChat will launch with a redesigned interface, faster performance, and new features. Stay tuned.</p>
+            </div>
 
-    <h2>Contact</h2>
-    <p>If you have urgent questions or need API access during maintenance, reach out through the available channels listed in the <a href="index.html">documentation overview</a>.</p>
-  </div>
-</main>
+            <h2>Need help?</h2>
+            <p>If you have an urgent issue or need access to your account data, the NomChat ID authentication API is still available. See the <a href="/docs/api-auth.html">Authentication API docs</a> for details.</p>
+
+            <table class="doc-table">
+                <tr><th>Service</th><th>Status</th></tr>
+                <tr><td>NomChat main platform</td><td><span style="color:#cc0000;font-weight:700">🔴 Under maintenance</span></td></tr>
+                <tr><td>NomChat ID Auth API</td><td><span style="color:#10b981;font-weight:700">🟢 Operational</span></td></tr>
+                <tr><td>hQd Pays</td><td><span style="color:#10b981;font-weight:700">🟢 Operational</span></td></tr>
+                <tr><td>AI Chat Company</td><td><span style="color:#10b981;font-weight:700">🟢 Operational</span></td></tr>
+                <tr><td>Docs site</td><td><span style="color:#10b981;font-weight:700">🟢 Operational</span></td></tr>
+            </table>
+        </div>
+    </main>
 </body>
 </html>
